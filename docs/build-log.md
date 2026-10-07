@@ -96,3 +96,125 @@ uv run python -c "import mcp, ragmotion; ..."
 - [0002. Separate repo with rag-motion as an editable path dependency](decisions/0002-separate-repo-with-editable-rag-motion.md)
 - [0003. Use the MCP Python SDK 2.x (MCPServer)](decisions/0003-mcp-python-sdk-2x.md)
 - [0004. Hands-on pacing, with explanations recorded](decisions/0004-hands-on-pacing-with-explanations.md)
+
+---
+
+## M1: Hello MCP: one tool, MCP Inspector, Claude Desktop
+**Date:** 2026-10-07 · **Commit:** not committed
+
+**Goal.** Build the smallest MCP server (one tool that calls rag-motion's exercise search), test it by hand, and use it from Claude Desktop.
+
+**What we did.**
+- The developer asked Claude to write the code and walk through it ("write it and walk me through it").
+- **Checked the mcp 2.3 API before writing.** `MCPServer(name, instructions, ...)`; `@server.tool(name, title, description, annotations, structured_output, ...)`; `server.run(transport="stdio" | "sse" | "streamable-http")`.
+- **Wrote `src/rag_motion_mcp/server.py`** in three parts:
+  1. Create the server: `MCPServer(name="rag-motion", instructions="Exercise library and program tools for strength coaches. Exercises are original, coach-reviewed content.")`.
+  2. Register one tool: `search_exercises(question: str, equipment: list[Equipment] | None = None, level: Difficulty | None = None, limit: int = 5) -> list[dict]`. It calls rag-motion's `ragmotion.retrieval.search_exercises` (imported as `rag_search_exercises` so the names don't clash). Owned equipment = the given equipment plus `"bodyweight"`, the same rule as rag-motion's `QuestionLimits.owned_equipment`. `limit` is clamped to 1-10. Each result returns `slug`, `name`, `movement_pattern`, `equipment`, `level`, `primary_muscles`, `description`, `similarity`.
+  3. `main()` runs `server.run(transport="stdio")`.
+- `src/rag_motion_mcp/__init__.py` now exports `main` from `server`, so the `rag-motion-mcp` command (from `[project.scripts]` in `pyproject.toml`) starts the server.
+- **Tested with the SDK's in-memory client** (`mcp.client.Client(server)`). `list_tools` showed the input schema; `call_tool` returned exercises (after the database fix below).
+- **Tested in MCP Inspector.** The developer ran it in their own terminal, connected, looked at the protocol messages, the tool form, and the output schema, and ran the tool.
+- **Added a level filter** (developer approved) after a coach observation in the Inspector results. `level: Difficulty | None`. `LEVELS = beginner < intermediate < advanced`; a level allows itself and every easier level. rag-motion's search can't filter by level, so the tool asks rag-motion for a pool of 40 (`POOL`), filters by level, then cuts to `limit`. See [decision 0005](decisions/0005-level-filter-in-mcp-tool.md).
+- **Connected Claude Desktop.** Read `~/Library/Application Support/Claude/claude_desktop_config.json` (it already had `mcp-installer` and `puppeteer` servers). With the developer's approval, backed it up as `claude_desktop_config.json.backup-2026-10-07` and added:
+  ```json
+  "rag-motion": {
+    "command": "/opt/homebrew/bin/uv",
+    "args": ["--directory", "/Users/musabs1/rag-motion-mcp", "run", "rag-motion-mcp"]
+  }
+  ```
+  The developer quit Claude Desktop with Cmd+Q and reopened it. The Claude Code session in the same app also picked up the server: the tool `mcp__rag-motion__search_exercises` and the server instructions appeared. See [decision 0007](decisions/0007-full-path-to-uv-in-client-config.md).
+- **Asked Claude Desktop a coach question** and checked the answer (see What we saw).
+
+**Commands.**
+```bash
+uv run python   # in-memory client tests (mcp.client.Client(server))
+# list_tools printed the input schema; the first call_tool failed (database down);
+# after starting Postgres, call_tool returned exercises
+
+cd ~/rag-motion && docker compose up -d --wait
+# rag-motion-db-1 Healthy
+
+npx @modelcontextprotocol/inspector uv --directory ~/rag-motion-mcp run rag-motion-mcp
+# run by the developer; Inspector opened at http://127.0.0.1:6274 with a session token in the URL
+
+# Edited ~/Library/Application Support/Claude/claude_desktop_config.json (backup made first),
+# then quit (Cmd+Q) and reopened Claude Desktop
+```
+
+**What we saw.**
+- **First in-memory result** (leg exercises, dumbbell, limit 3): Single-Leg Romanian Deadlift (intermediate, dumbbell, 0.634), Dumbbell Reverse Lunge (beginner, dumbbell, 0.633), Single-Leg Hop (intermediate, bodyweight, 0.629).
+- **MCP Inspector v2.9:**
+  - The server card was named "uv" (named after the start command). A toggle connected it: "Connected", "MCP 2025-11-25" (the protocol version agreed in the initialize handshake).
+  - The Protocol panel showed CLIENT -> SERVER messages, each about 100 ms and OK: `initialize`, `tools/list`, `prompts/list`, `resources/templates/list`.
+  - Top left showed "rag-motion" (our server name). Top menu: Servers | Tools | Prompts | Resources.
+  - The Tools tab showed our docstring as the tool description and a form built from the schema: Question required (marked *), Equipment as a dropdown of 12 values, Limit defaulting to 5.
+  - Clicking the server card did nothing in v2.9; the Tools tab in the top menu was the way in. The Console tab showed server logs (stderr).
+  - The `tools/list` response's `outputSchema` was `{"result": array of objects with additionalProperties: true}`: a vague shape from `-> list[dict]`, wrapped in `"result"` because structured output must be an object. See [decision 0008](decisions/0008-list-dict-output-for-m1.md).
+- **Inspector run before the level filter** (dumbbell + bodyweight): Dumbbell Reverse Lunge (beginner), Single-Leg RDL (intermediate), Single-Leg Hop (intermediate), Split Squat (beginner), Calf Raise (beginner). Coach observation: there was no level filter, so a general question got intermediate exercises and a plyometric (jumping) exercise, and no Goblet Squat for the broad "leg exercises".
+- **After the level filter:**
+  - `beginner` -> Dumbbell Reverse Lunge, Split Squat, Calf Raise, A-Skip, Dumbbell RDL (all beginner).
+  - `intermediate` -> a mix of beginner and intermediate.
+  - `"expert"` -> rejected by schema validation before our code ran: "Input should be 'beginner', 'intermediate' or 'advanced'".
+  - Goblet Squat (dumbbell, beginner) is in the catalog but didn't make the top 5 for the broad "leg exercises", while A-Skip did. That is a ranking issue with vague queries, not a filter bug.
+- **Claude Desktop test.** Question: "My client is a beginner with only dumbbells. What leg exercises could she do?"
+  - Claude chose `search_exercises` on its own and showed a permission box: "Claude wants to use Search exercises from rag-motion", with Deny / Always allow / Allow once.
+  - The answer covered goblet squat, dumbbell RDL, split squat progressing to dumbbell reverse lunge, glute bridge, calf raises, and broad jumps later. The details came from the coach-written descriptions (counterbalance; stepping back keeps weight on the front leg; heels off a step for range). Only dumbbell and bodyweight exercises appeared.
+  - **Key catch:** the answer also said "2-3 sets of 8-12 reps each, twice a week" with no citation. `search_exercises` returns no research, so Claude filled in dosage from its own general knowledge, blended into the answer and unlabeled. In rag-motion the rule was facts only from retrieved evidence, with general knowledge in a separate, labeled field. Inside Claude Desktop the server doesn't control how Claude writes the answer, only what the tools return. Plan for M2: add `search_sources` and `ask_question` (cited research) and stronger server instructions (numbers only from tools).
+
+**Problems and fixes.**
+- **Database down.** The first in-memory call failed: rag-motion's Postgres wasn't running (Docker was off), and rag-motion raised `DatabaseUnavailable`: "Can't reach the database. Is Docker running?" Fix: started Docker, then `docker compose up -d --wait` in `~/rag-motion`. Lesson: the MCP server depends on everything rag-motion depends on.
+- **Inspector UI differs from older docs.** In v2.9, clicking the server card does nothing. Fix: use Tools in the top menu.
+- **Vague output schema** from `-> list[dict]`. Fix planned for M2: typed return models.
+- **No level filter**, so beginners got intermediate exercises. Fix: added the `level` parameter.
+- **Uncited dosage in the Claude Desktop answer.** Fix planned for M2: research tools and stronger server instructions.
+
+**How it was explained.**
+- **Walkthrough of `server.py`.** It imports `MCPServer` (the 2.x name for the tutorials' `FastMCP`) plus rag-motion's Equipment list and search function (renamed `rag_search_exercises` to avoid clashing with the tool name). "Create the server" is like `app = FastAPI()` in rag-motion; the name and instructions are what Claude learns when it connects. "`@server.tool()` turns a plain function into something Claude can call. The SDK reads the function name (tool name), the docstring (the description Claude reads to decide WHEN to use the tool; a vague docstring means Claude picks the wrong tool) and the type hints (the input schema: the rules Claude must follow). Claude can't send 'dumbells' with a typo; the SDK rejects it." `min(limit, 10)` is there so Claude can't ask for 500 exercises. The returned dicts are sent back to Claude as JSON.
+- **Transport** = how the messages travel between Claude and the server. stdio = Claude Desktop starts our program itself and talks to it through the program's input and output, like typing into a terminal and reading replies; nothing goes over the network. Right for a tool on your own laptop; HTTP is for servers hosted online.
+- **In-memory client** = a fake Claude in the same Python program, having the same conversation Claude Desktop will have, without setup.
+- **The developer's summary, and the corrections.** Developer: "you created the server, registered the tool, then communicated between the cloud and the tool." Corrections:
+  1. It's Claude, not "the cloud", and with stdio nothing goes to the cloud: Claude Desktop starts the server on the laptop and they talk locally. The only internet calls are those rag-motion already makes (the embedding via OpenRouter).
+  2. The tool is the "R" of RAG, not all of it: `search_exercises` only retrieves; Claude does the generation from what the tool returned. "With MCP, Claude becomes the 'G' in your RAG."
+  - Full picture: create server -> register tool -> run on a transport -> Claude connects and asks what tools exist -> Claude decides to call the tool -> our server runs the search and returns exercises -> Claude writes the answer.
+- **MCP Inspector.** Made by the MCP project itself (footer "Model Context Protocol, a Series of LF Projects", i.e. under the Linux Foundation): official, not third party, but a separate tool from the Python SDK. The SDK is the library inside the server; the Inspector is a stand-alone JavaScript web app (started with `npx`, Node's download-and-run command) that works with any MCP server in any language because it only speaks the protocol. "It's like FastAPI's /docs page in rag-motion, but for MCP." Purpose: you play the part Claude will play; you see exactly what Claude sees (the docstring description, the form built from the schema); you test the server on its own before Claude is involved (so you know whether a later problem is the server or Claude); you can try awkward inputs on purpose.
+- **Gotcha: stdout vs stderr.** With stdio, the program's normal output IS the channel to Claude, so a stray `print()` would corrupt the messages. Logs go to the separate error channel (stderr), which the Inspector shows as Console.
+- **Inspector URL token.** The URL contains `MCP_INSPECTOR_API_TOKEN`, a password for that session. It is local and changes every run, but crop it out of public screenshots.
+- **outputSchema** = the server's promise about the shape of its answers (inputSchema = what Claude must send). From `-> list[dict]` it says "array of objects with any keys", wrapped in `"result"` because structured output must be an object. A typed model (like rag-motion's Pydantic models) would list every field, so Claude knows exactly what comes back and the SDK checks our output.
+- **Level filter:** `level` = the highest level allowed; the schema rejects invalid values before our code runs.
+- **Claude Desktop config:** `"rag-motion"` is the display name; `command` + `args` = the same start command the Inspector used; the full path to uv because apps started from the Dock don't see the terminal's PATH (the most common reason servers fail to start). Cmd+Q is needed because Claude Desktop only reads the file at startup.
+- **Permission box:** MCP's built-in human-in-the-loop safety: the AI can ask to use a tool, you decide (Deny / Allow once / Always allow). Fine to always-allow a read-only search; it matters much more for `save_program_to_wger`, which writes data.
+- **Interview line:** "MCP gives the client the tools, but the client writes the answer, so you push your rules into tool outputs and server instructions."
+
+**Developer questions.**
+- *"What is the purpose of me asking a question here? Is MCP Inspector a tool to see how everything works, help visualize?"* Yes: a testing and see-how-it-works tool where you play Claude's part (MCP Inspector explanation above).
+- *"Where is MCP Inspector from? Is it from the Python SDK? Third party?"* Official, from the MCP project under the Linux Foundation, but separate from the Python SDK (above).
+- *"What's the uv card?"* The server card under Servers, named after the start command.
+- *"Did this work?"* (the Claude Desktop answer) Yes, with the uncited-dosage catch.
+- *"How many other steps are there?"* Six after M1: M2 more rag-motion tools, M3 wger in Docker, M4 save to wger, M5 logs + next week, M6 evals, M7 README/demo/LinkedIn.
+
+**Open questions.**
+- Goblet Squat doesn't rank in the top 5 for the broad query "leg exercises". Is this worth addressing (in rag-motion's ranking or in how Claude phrases queries), or is it acceptable since Claude Desktop's answer still included a goblet squat?
+- The commit hash for M1 is added after the commit.
+
+**Learned.**
+- [MCPServer](concepts.md#mcpserver) (new)
+- [Tool registration](concepts.md#tool-registration) (new)
+- [Input schema and output schema](concepts.md#input-schema-and-output-schema) (new)
+- [Structured output and the "result" wrapper](concepts.md#structured-output-and-the-result-wrapper) (new)
+- [Transport](concepts.md#transport) (extended: stdio vs HTTP)
+- [stdout vs stderr in stdio servers](concepts.md#stdout-vs-stderr-in-stdio-servers) (new)
+- [In-memory client](concepts.md#in-memory-client) (new)
+- [MCP Inspector](concepts.md#mcp-inspector) (new)
+- [Initialize handshake and protocol version](concepts.md#initialize-handshake-and-protocol-version) (new)
+- [Protocol messages: tools/list, tools/call, prompts/list, resources/templates/list](concepts.md#protocol-messages-toolslist-toolscall-promptslist-resourcestemplateslist) (new)
+- [Client config file and PATH for Dock apps](concepts.md#client-config-file-and-path-for-dock-apps) (new)
+- [Tool-call permission (human in the loop)](concepts.md#tool-call-permission-human-in-the-loop) (new)
+- [Claude is the G in RAG](concepts.md#claude-is-the-g-in-rag) (new)
+- [The client controls the final answer](concepts.md#the-client-controls-the-final-answer) (new)
+- [MCP server](concepts.md#mcp-server) (extended: it inherits rag-motion's dependencies)
+
+**Decisions.**
+- [0005. Level filter in the MCP tool, not in rag-motion's SQL](decisions/0005-level-filter-in-mcp-tool.md)
+- [0006. stdio transport for local use](decisions/0006-stdio-transport-for-local-use.md)
+- [0007. Full path to uv in the client config](decisions/0007-full-path-to-uv-in-client-config.md)
+- [0008. Keep list[dict] output for M1; typed models in M2](decisions/0008-list-dict-output-for-m1.md)

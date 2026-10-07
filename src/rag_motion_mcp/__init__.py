@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from rag-motion-mcp!")
+from rag_motion_mcp.server import main
+
+__all__ = ["main"]
