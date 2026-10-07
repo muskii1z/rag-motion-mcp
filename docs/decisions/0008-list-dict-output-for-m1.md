@@ -16,3 +16,6 @@ Until M2, the output schema is vague and the tool's output is not validated.
 
 ## Revisit when
 M2 (planned).
+
+## Update (M2, 2026-10-07)
+Done. M2 added typed Pydantic models (`ExerciseResult`, `Passage`, `CitedAnswer`, `ProgramResult`). Each tool's outputSchema now lists every field with a description. See [the M2 build log](../build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests).

@@ -218,3 +218,103 @@ npx @modelcontextprotocol/inspector uv --directory ~/rag-motion-mcp run rag-moti
 - [0006. stdio transport for local use](decisions/0006-stdio-transport-for-local-use.md)
 - [0007. Full path to uv in the client config](decisions/0007-full-path-to-uv-in-client-config.md)
 - [0008. Keep list[dict] output for M1; typed models in M2](decisions/0008-list-dict-output-for-m1.md)
+
+---
+
+## M2: rag-motion tools, resources, a prompt, tool annotations, tests
+**Date:** 2026-10-07 · **Commit:** 70542ad (feat: M2 rag-motion tools, resources and prompt with typed results and tests)
+
+**Goal.** Expose the rest of rag-motion (cited answers, research search, the program builder) through MCP, with clear output shapes, and test it offline.
+
+**What we did.**
+- **Faster pacing.** The developer asked to "pick up the pace". Claude built the whole step, then walked through it, instead of going piece by piece. See [decision 0011](decisions/0011-faster-pacing-from-m2.md).
+- **Server instructions now carry rag-motion's answer rule.** Facts and numbers (sets, reps, rest, frequency, progression) only from tool results, cited with the ids the tools return, e.g. `[goblet-squat]` or `[pag2-57]`. Anything from Claude's own general knowledge goes in a separate section labeled "General guidance (not from rag-motion sources)". Fictional clients only; no medical advice. Reason: in M1, Claude Desktop added "2-3 sets of 8-12, twice a week" from its own knowledge, uncited.
+- **Typed output models** (Pydantic, the same data-model library rag-motion uses): `ExerciseResult`, `Passage`, `CitedAnswer`, `Message`, `ProgramResult`. Each becomes the tool's `outputSchema`, so Claude knows every field it gets back. This replaces M1's vague `list[dict]` schema ([decision 0008](decisions/0008-list-dict-output-for-m1.md)). Field descriptions tell Claude how to use each field, e.g. `slug`: "Exercise id; cite it as [slug]"; `general_guidance`: "Extra advice NOT from the sources. Always show it labeled as general guidance."
+- **Four tools**, all annotated `read_only_hint=True, destructive_hint=False, open_world_hint=False` (via `mcp.types.ToolAnnotations`):
+  - `search_exercises` (from M1, now returns `list[ExerciseResult]`). Its docstring now says to use `ask_question` for sets/reps questions, and to search specifically ("squat pattern" or "upper back", not just "legs").
+  - `search_sources(query, population, limit)`: population is one of adults, older-adults, youth, pregnancy; limit capped at 1-8. Calls `ragmotion.retrieval.search_all` with the population filter and returns passages with `id`, `source`, `where`, `url`, `license`, `text`.
+  - `ask_question(question) -> CitedAnswer`: calls `ragmotion.rag.answer_question`, the full rag-motion pipeline (rewrite slang, read limits, filtered search, grounded answer, citation check). Returns `answer`, `cited_ids`, `evidence_coverage`, `gaps`, `general_guidance` (kept separate), `sources`, `citation_problems`. See [decision 0009](decisions/0009-ask-question-wraps-answer-question.md).
+  - `build_program(conversation: list[Message]) -> ProgramResult`: wraps `ragmotion.agent.run_turn`, which is stateless (the whole conversation is passed each time). `status` is `needs_info`, `program`, `message` or `error`. On `needs_info`, Claude asks the coach the returned question word for word, then calls again with the full conversation (earlier messages, the question as an assistant message, the answer as a user message). A program result includes the program (days, sets, reps, rest, weekly sets counted in code, progression, rationale, safety notes), `passed_checks`, `failed_checks` and cited `sources`. See [decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md).
+- **Two resources:** `ragmotion://exercises` (the 60-exercise catalog as JSON) and `ragmotion://sources` (the 13 sources from rag-motion's `data/sources.toml`, with licenses and links).
+- **One prompt:** `new_client_intake(client_description)`. A ready-made starting message telling Claude to use `build_program`, ask its questions, show days/sets/reps/rest, weekly sets and the cited rationale, and not add numbers that aren't in tool results.
+- **Live tests** through the in-memory MCP client, with real rag-motion and real models (see What we saw).
+- **Automated tests:** `tests/test_server.py`, 9 offline tests through the in-memory client, with rag-motion's functions replaced by fakes (pytest's `monkeypatch` on the server module's names). Added pytest as a dev dependency (`uv add --dev pytest`).
+
+**Commands.**
+```bash
+uv add --dev pytest
+# added pytest to the dev dependency group in pyproject.toml
+
+uv run python   # in-memory client scripts (real rag-motion, real models)
+# list tools/resources/prompts; search_sources; read the sources resource;
+# ask_question; two-turn build_program (results in What we saw)
+
+uv run pytest -q
+# 9 passed in 0.98 s (DeprecationWarnings from SWIG/PyMuPDF inside rag-motion, harmless)
+```
+
+**What we saw.**
+- **Listing:** 4 tools, all read-only. Outputs list their fields. `ask_question`: answer, cited_ids, evidence_coverage, gaps, general_guidance, sources, citation_problems. `build_program`: status, question, text, program, passed_checks, failed_checks, sources. Resources `ragmotion://exercises` and `ragmotion://sources`. Prompt `new_client_intake`.
+- **`search_sources`** "rest between sets for muscle growth" -> `singer2024-rest-17`, `singer2024-rest-9`.
+- **Sources resource:** 13 entries.
+- **`ask_question`** "How long should a beginner rest between sets to build muscle?" -> "a rest interval of 1-2 minutes between sets is advised [iversen2021-time-efficient-15]...". Cited `iversen2021-time-efficient-15`, `singer2024-rest-17`, `singer2024-rest-0`. Coverage full. No citation problems.
+- **`build_program`, turn 1:** "I want a workout program for my client" -> `needs_info`, with a question about goal, days, equipment (a list including weight machines and cable station) and level.
+- **`build_program`, turn 2:** the conversation plus "Build muscle, 3 days a week, dumbbells and a bench, beginner." -> `program`, passed all checks.
+  - Day 1, Full body A: Goblet Squat 3x8-12, Dumbbell RDL 3x8-12, Dumbbell Bench Press 3x8-12, One-Arm Dumbbell Row 3x8-12, Front Plank 3x30-60 s.
+  - Day 2, Full body B: Dumbbell Reverse Lunge, Dumbbell Hip Thrust, Dumbbell Overhead Press, Chest-Supported Dumbbell Row, Farmer Carry 3x30-45 m.
+  - Day 3, Full body C: Goblet Squat, Dumbbell RDL, Incline Dumbbell Press, One-Arm Dumbbell Row, Dead Bug.
+  - Weekly sets: chest 6, back 9, shoulders 12, quads 9, glutes/hamstrings 21.
+  - Sources included `notes-program-design-1`, `notes-program-design-2`, `iversen2021-time-efficient-24`, `iversen2021-time-efficient-3`, `singer2024-rest-9`.
+- The two-turn flow works through MCP exactly as in rag-motion's web page (`/api/program`). The agent stays stateless; the client carries the conversation.
+- **What the 9 offline tests check:**
+  - the server lists its 4 tools, 2 resources and 1 prompt, and every tool is read-only;
+  - equipment always adds bodyweight, and the level filter asks for a pool of 40 then keeps only allowed levels;
+  - `limit` is capped at 10, and bad inputs (level "expert", equipment typo "dumbells") come back as errors;
+  - `search_sources` passes the population filter and caps `limit` at 8;
+  - `ask_question` returns citations and keeps `general_guidance` separate;
+  - `build_program` maps the agent's question/message/error to `needs_info`/`message`/`error` (3 cases);
+  - `build_program` passes the whole conversation through and returns the checked program with its sources.
+
+**Problems and fixes.**
+- **"location" vs "where".** The live `build_program` test showed the agent stores a passage's section under the key `"where"`, not `"location"`. Fixed in the server after the live test.
+
+**How it was explained.**
+- **Tools vs resources vs prompts.** A tool is an action Claude decides to run (search, build). A resource is data that can be read or attached without running anything, like opening a file (the exercise catalog, the sources list). A prompt is a ready-made starting message the user picks from a menu (like a template), not something Claude calls on its own.
+- **Server instructions as the rule-carrier.** The server can't control how Claude writes the final answer, so rag-motion's citation rule is sent as instructions at connect time, and repeated in tool descriptions and field descriptions.
+- **Typed outputs.** Like rag-motion's Pydantic models for the LLM's answers, but now describing what the server returns to Claude. The outputSchema lists every field.
+- **Multi-turn tool with a stateless agent.** The server keeps no memory between calls. Claude carries the conversation and sends it back each time, like the web page did in rag-motion's `/api/program`.
+- **Tool annotations.** Hints to the client (read-only, destructive, idempotent, open-world) that let apps decide how carefully to ask for permission. All four tools are read-only. M4's `save_program_to_wger` will be the first that changes data.
+- **Fakes in tests (monkeypatch).** Swap rag-motion's real functions for small stand-ins, so tests check our server's wiring (inputs passed through, filters, mapping, validation) without the database, the internet or cost. The live tests check the real thing.
+
+**Developer questions.**
+- *"lets pick up the pace, lets tackle m2"*: Claude built the whole step, then walked through it ([decision 0011](decisions/0011-faster-pacing-from-m2.md)).
+- *"How many other steps are there?"* Six after M1 (M2-M7).
+
+**Open questions.**
+- Claude Desktop has not been re-tested in this brief with the new instructions. Does it now keep numbers cited and put its own advice under the "General guidance" label (the M1 catch)?
+- Speed and cost of `ask_question` and `build_program` calls were not recorded. Each runs LLM calls inside the tool.
+- Program sources from `build_program` are returned with `url` set to `None` (see `server.py`), while `search_sources` passages carry URLs. Is that worth filling in?
+- Whether Claude passes the full conversation back correctly on `needs_info` is to be checked in the M6 tool-choice eval.
+- From M1, still open: Goblet Squat not ranking in the top 5 for the broad "leg exercises" query.
+
+**Learned.**
+- [Tools, resources and prompts](concepts.md#tools-resources-and-prompts) (extended: all three built; plain-language difference)
+- [Server instructions](concepts.md#server-instructions) (new)
+- [Typed tool outputs and field descriptions](concepts.md#typed-tool-outputs-and-field-descriptions) (new)
+- [Input schema and output schema](concepts.md#input-schema-and-output-schema) (extended: typed models in M2)
+- [Structured output and the "result" wrapper](concepts.md#structured-output-and-the-result-wrapper) (extended: models vs lists)
+- [Resources and resource URIs](concepts.md#resources-and-resource-uris) (new)
+- [Prompts (MCP)](concepts.md#prompts-mcp) (new)
+- [Multi-turn tool with client-held state](concepts.md#multi-turn-tool-with-client-held-state) (new)
+- [Tool annotations](concepts.md#tool-annotations) (new)
+- [The client controls the final answer](concepts.md#the-client-controls-the-final-answer) (extended: the M2 response)
+- [MCPServer](concepts.md#mcpserver) (extended: new instructions)
+- [In-memory client](concepts.md#in-memory-client) (extended: used for live tests and pytest)
+- [Fakes in tests (monkeypatch)](concepts.md#fakes-in-tests-monkeypatch) (new)
+- [Dev dependencies](concepts.md#dev-dependencies) (new)
+
+**Decisions.**
+- [0009. ask_question wraps rag-motion's answer_question](decisions/0009-ask-question-wraps-answer-question.md)
+- [0010. Stateless build_program; the client carries the conversation](decisions/0010-stateless-build-program-client-carries-conversation.md)
+- [0011. Faster pacing from M2: build the step, then walk through it](decisions/0011-faster-pacing-from-m2.md)
+- [0008. Keep list[dict] output for M1; typed models in M2](decisions/0008-list-dict-output-for-m1.md) (revisited: typed models added)

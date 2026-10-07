@@ -25,6 +25,8 @@ Added in M1: because the server calls rag-motion's code, it depends on everythin
 ### MCPServer
 The server class in the MCP Python SDK 2.x (`from mcp.server import MCPServer`); tutorials written for 1.x call it `FastMCP`. Creating it is like `app = FastAPI()` in rag-motion. You give it a `name` and `instructions`; these are what Claude learns about the server when it connects. Ours: name "rag-motion", instructions "Exercise library and program tools for strength coaches. Exercises are original, coach-reviewed content."
 
+Added in M2: the instructions were rewritten to carry rag-motion's citation rule. See [Server instructions](#server-instructions).
+
 **In an interview:** "In SDK 2.x I create an MCPServer with a name and instructions, which the client reads on connect, then register tools on it, much like routes on a FastAPI app."
 
 *First seen: M1.*
@@ -37,7 +39,7 @@ The first message a client sends when it connects is `initialize`. In that excha
 *First seen: M1.*
 
 ### Protocol messages: tools/list, tools/call, prompts/list, resources/templates/list
-After `initialize`, the client asks the server what it offers. `tools/list` returns every tool with its name, description, input schema and output schema. `prompts/list` and `resources/templates/list` ask for prompts and resources (our server has none yet). `tools/call` runs a tool with the arguments the AI chose. In the MCP Inspector each of these showed as a CLIENT -> SERVER message, about 100 ms each.
+After `initialize`, the client asks the server what it offers. `tools/list` returns every tool with its name, description, input schema and output schema. `prompts/list` and `resources/templates/list` ask for prompts and resources (our server had none in M1; since M2 it has two resources and one prompt, and the tests call `list_resources` and `list_prompts`). `tools/call` runs a tool with the arguments the AI chose. In the MCP Inspector each of these showed as a CLIENT -> SERVER message, about 100 ms each.
 
 **In an interview:** "The client discovers capabilities with tools/list, prompts/list and resources/templates/list, then calls tools with tools/call. I watched these messages in the MCP Inspector's protocol panel."
 
@@ -53,18 +55,64 @@ RAG (retrieval-augmented generation) has two halves: retrieve evidence (R), then
 ### The client controls the final answer
 In rag-motion, our own code wrote the prompt and enforced the rule: facts only from retrieved evidence, cited, and general knowledge only in a separate, labeled field. Through MCP, the client (Claude Desktop) writes the answer, and the server only controls what the tools return. In M1, Claude Desktop added "2-3 sets of 8-12 reps each, twice a week" from its own general knowledge, uncited and unlabeled, because `search_exercises` returns no research.
 
+Added in M2: the response was to push the rule in from three places, since the server still can't control the final answer: the [server instructions](#server-instructions) sent at connect time, the tool descriptions (docstrings), and the field descriptions in the [typed outputs](#typed-tool-outputs-and-field-descriptions). M2 also added research tools (`search_sources`, `ask_question`) so Claude has cited numbers to use instead of its own. Whether Claude Desktop now follows the rule has not yet been re-tested.
+
 **In an interview:** "MCP gives the client the tools, but the client writes the answer, so you push your rules into tool outputs and server instructions."
 
 *First seen: M1.*
 
+### Server instructions
+Text the server sends to the client when it connects (the `instructions` argument of `MCPServer`). Claude reads it as guidance for using the whole server. The server can't control how Claude writes the final answer, so in M2 rag-motion's citation rule rides along here: facts and numbers (sets, reps, rest, frequency, progression) only from tool results, cited with ids like `[goblet-squat]` or `[pag2-57]`; Claude's own general knowledge only in a separate section labeled "General guidance (not from rag-motion sources)". The same rule is repeated in tool descriptions and field descriptions, because instructions alone are only a request.
+
+**In an interview:** "Server instructions are the one place to state rules for the whole server. I put rag-motion's citation rule there and repeated it in tool and field descriptions, because the client, not my server, writes the answer."
+
+*First seen: M2.*
+
 ## Tools, resources and prompts
 
 ### Tools, resources and prompts
-The three things an MCP server can offer. **Tools** are actions the AI can call (for example, build a program). **Resources** are data the AI can read. **Prompts** are ready-made instructions the user or assistant can pick. M1 built the first tool (`search_exercises`); resources and prompts are planned for M2.
+The three things an MCP server can offer. **Tools** are actions the AI can call (for example, build a program). **Resources** are data the AI can read. **Prompts** are ready-made instructions the user or assistant can pick. M1 built the first tool (`search_exercises`).
 
-**In an interview:** "An MCP server exposes tools for actions, resources for readable data, and prompts for reusable instructions."
+Added in M2, in plain language: a tool is an action Claude decides to run (search, build). A resource is data that can be read or attached without running anything, like opening a file (the exercise catalog, the sources list). A prompt is a ready-made starting message the user picks from a menu, like a template; Claude doesn't call it on its own. The server now has all three: 4 tools (`search_exercises`, `search_sources`, `ask_question`, `build_program`), 2 resources, 1 prompt.
 
-*First seen: M0.*
+**In an interview:** "An MCP server exposes tools for actions, resources for readable data, and prompts for reusable instructions. The difference is who triggers them: the model chooses tools, while resources and prompts are picked or attached by the user or app."
+
+*First seen: M0. Built in M2.*
+
+### Resources and resource URIs
+A resource is read-only data identified by a URI (an address, like a web link but with its own scheme). Ours: `ragmotion://exercises` (the 60-exercise catalog as JSON: id, name, pattern, equipment, level, muscles) and `ragmotion://sources` (the 13 sources from rag-motion's `data/sources.toml`, with licenses and links). Reading one is like opening a file: no search runs and no model is called. Registered with `@server.resource(uri, name=..., mime_type=..., description=...)`.
+
+**In an interview:** "I exposed the exercise catalog and the source list as MCP resources, so a user can attach the whole catalog or check licenses without the model running a search."
+
+*First seen: M2.*
+
+### Prompts (MCP)
+An MCP prompt is a ready-made starting message, with blanks the user fills in, that appears in the client's prompt menu. Ours, `new_client_intake(client_description)`, produces: "I'm a strength coach with a new client: ...", then asks Claude to use `build_program`, ask its questions, show days with sets, reps and rest, the weekly sets per muscle group and the cited rationale, and not add numbers that aren't in the tool results. Not to be confused with an LLM prompt inside rag-motion: this one is a template for the user's opening message.
+
+**In an interview:** "MCP prompts are user-picked templates. Mine starts a client intake and bakes in the rule not to add numbers that the tools didn't return."
+
+*First seen: M2.*
+
+### Typed tool outputs and field descriptions
+Each tool returns a Pydantic model (Pydantic: the library rag-motion uses to describe and check data shapes). The SDK turns the model into the tool's outputSchema, so Claude sees every field and its meaning, and the SDK checks our output matches. Like rag-motion's Pydantic models for the LLM's answers, but now describing what the server returns to Claude. Models in M2: `ExerciseResult`, `Passage`, `CitedAnswer`, `Message` (an input), `ProgramResult`. Field descriptions double as instructions, e.g. `slug`: "Exercise id; cite it as [slug]"; `general_guidance`: "Extra advice NOT from the sources. Always show it labeled as general guidance."
+
+**In an interview:** "I return typed models, not loose dictionaries, so each tool's output schema documents every field. The field descriptions are where I tell the model how to use the data, like 'cite this id'."
+
+*First seen: M2.*
+
+### Multi-turn tool with client-held state
+A tool call is one request and one response, but building a program can take several turns (the agent may need to ask for missing details). State means the memory of the conversation so far. Our server keeps no memory between calls: Claude carries the conversation and sends it back each time, like rag-motion's web page did with `/api/program`. `build_program(conversation)` returns `status: needs_info` with a `question`; Claude asks the coach that question word for word, then calls again with the earlier messages, the question as an assistant message, and the answer as a user message. Tested live: turn 1 asked for goal, days, equipment and level; turn 2 returned a checked 3-day program.
+
+**In an interview:** "My program tool is stateless: the client sends the whole conversation every call and the tool returns either a question or a finished program, so the server needs no session storage. The risk is the client rebuilding the conversation wrong, which I plan to test in my eval."
+
+*First seen: M2.*
+
+### Tool annotations
+Hints a tool sends to the client about its behavior: read-only (doesn't change anything), destructive (may delete or overwrite), idempotent (calling twice has the same effect as once), open-world (talks to outside systems). Apps can use them to decide how carefully to ask for permission. Set with `mcp.types.ToolAnnotations`; all four M2 tools are `read_only_hint=True, destructive_hint=False, open_world_hint=False`. They are hints, not enforcement. M4's `save_program_to_wger` will be the first tool that changes data.
+
+**In an interview:** "I mark every tool with annotations like read-only or destructive so the client can decide how strictly to ask the user. All my current tools are read-only; the wger write tool will be the first that isn't."
+
+*First seen: M2.*
 
 ### Tool registration
 `@server.tool()` turns a plain Python function into something Claude can call. The SDK reads three things: the function name (the tool name), the docstring (the description Claude reads to decide WHEN to use the tool; a vague docstring means Claude picks the wrong tool), and the type hints (the input schema: the rules Claude must follow). Because `equipment` is typed as rag-motion's list of allowed equipment values, Claude can't send "dumbells" with a typo; the SDK rejects it. The returned value is sent back to Claude as JSON.
@@ -76,12 +124,16 @@ The three things an MCP server can offer. **Tools** are actions the AI can call 
 ### Input schema and output schema
 The input schema says what Claude must send (built from the type hints); the output schema is the server's promise about the shape of its answers (built from the return type). Invalid inputs are rejected before our code runs: `level="expert"` came back with "Input should be 'beginner', 'intermediate' or 'advanced'". Our return type `-> list[dict]` gave a vague output schema: "array of objects with any keys" (`additionalProperties: true`). A typed model (like rag-motion's Pydantic models) would list every field, so Claude knows exactly what comes back and the SDK checks our output.
 
+Added in M2: done. See [Typed tool outputs and field descriptions](#typed-tool-outputs-and-field-descriptions). The tests also confirm the input schema still rejects bad values (level "expert", equipment typo "dumbells") before our code runs.
+
 **In an interview:** "The input schema protects the server from bad arguments; the output schema tells the model what it will get back. Type hints drive both, so precise types give precise schemas."
 
 *First seen: M1.*
 
 ### Structured output and the "result" wrapper
 Structured output means the tool's result is sent as typed JSON matching the output schema, not just text. Structured output must be a JSON object, so when a tool returns a list, the SDK wraps it in an object under the key `"result"`. That's why our schema showed `{"result": [...]}`.
+
+Added in M2: tools that return a list of models (`search_exercises`, `search_sources`) are still wrapped, so the tests read `structured_content["result"]`. Tools that return a single model (`ask_question`, `build_program`) are already objects, so their fields sit at the top level.
 
 **In an interview:** "Structured tool output has to be an object, so the SDK wraps a returned list in a result key; a typed return model avoids that and documents every field."
 
@@ -108,9 +160,18 @@ A program has a normal output channel (stdout) and a separate error channel (std
 ### In-memory client
 A fake Claude in the same Python program (`mcp.client.Client(server)`), having the same conversation Claude Desktop will have, without any setup. We used it to call `list_tools` (to see the input schema) and `call_tool` (to get exercises back).
 
-**In an interview:** "The SDK's in-memory client lets me test a server's tools from Python without launching any external client."
+Added in M2: used two ways. Live tests with real rag-motion and real models (`ask_question`, a two-turn `build_program`). And automated pytest tests (`tests/test_server.py`), where rag-motion is replaced by fakes, so the tests go through the real MCP layer (schemas, validation, output) offline.
+
+**In an interview:** "The SDK's in-memory client lets me test a server's tools from Python without launching any external client. My pytest suite uses it, so tests exercise the real protocol layer, not just the Python functions."
 
 *First seen: M1.*
+
+### Fakes in tests (monkeypatch)
+A fake is a small stand-in for a real function. pytest's `monkeypatch` swaps a name in a module for the test's duration, e.g. replacing the server module's `answer_question` with a function that returns a fixed answer. This lets tests check our server's wiring (inputs passed through, filters, mapping, validation) without the database, the internet or cost. The live tests check the real thing. M2: 9 offline tests, 9 passed in 0.98 s.
+
+**In an interview:** "I unit-test the MCP server with rag-motion faked out, so the tests check my wiring (filters, limits, status mapping, validation) offline in under a second, and I run separate live tests for the real pipeline."
+
+*First seen: M2.*
 
 ### MCP Inspector
 An official testing tool from the MCP project (under the Linux Foundation), separate from the Python SDK. The SDK is the library inside the server; the Inspector is a stand-alone JavaScript web app, started with `npx` (Node's download-and-run command), that works with any MCP server in any language because it only speaks the protocol. "It's like FastAPI's /docs page in rag-motion, but for MCP." You play the part Claude will play: you see exactly what Claude sees (the docstring description, a form built from the schema), test the server before Claude is involved (so you know whether a later problem is the server or Claude), and try awkward inputs on purpose. Notes from v2.9: the server card is named after the start command ("uv"); clicking the card does nothing, use Tools in the top menu; the URL holds a session token (`MCP_INSPECTOR_API_TOKEN`), local and new each run, but crop it out of public screenshots.
@@ -168,6 +229,13 @@ Libraries pull in their own helpers: dependencies of dependencies. That is why `
 **In an interview:** "Adding one package brings in its whole dependency tree; the lock file pins every one so the environment is reproducible."
 
 *First seen: M0.*
+
+### Dev dependencies
+Packages needed only while developing (for example, to run tests), not to run the server. `uv add --dev pytest` put pytest in a `[dependency-groups] dev` list in `pyproject.toml`, separate from the server's own `dependencies` (`mcp`, `ragmotion`).
+
+**In an interview:** "Test tools like pytest are dev dependencies, so they're locked for development but not part of what the server needs to run."
+
+*First seen: M2.*
 
 ### Major-version API changes
 Libraries rename and move things between major versions (1.x to 2.x). Most MCP tutorials use version 1: `from mcp.server.fastmcp import FastMCP`. In the installed mcp 2.3 that import fails with `ModuleNotFoundError`, and the class is `from mcp.server import MCPServer`. Lesson: always check the version you actually installed, not the tutorial's. In M1 the same lesson applied to the MCP Inspector: v2.9's interface didn't match older docs.

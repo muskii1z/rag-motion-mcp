@@ -18,6 +18,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [MCP server](concepts.md#mcp-server): a thin connector; the AI picks the tool, the server does the work.
 - [M0](build-log.md#m0-project-setup-pieces-1-3): planned tools `build_program`, `search_sources`, `save_to_wger`, `get_training_log`.
 - [M1](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): first tool `search_exercises`, wrapping rag-motion's exercise search with equipment and level filters.
+- [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): 4 read-only tools (`search_exercises`, `search_sources`, `ask_question` for cited answers, `build_program` for checked, multi-turn programs), 2 resources (exercise catalog, sources list), 1 prompt (`new_client_intake`).
 - [Decision 0001](decisions/0001-coach-mcp-over-rag-motion-and-wger.md): the coach MCP.
 
 ### Walk me through what happens when Claude uses your tool.
@@ -38,24 +39,36 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 ### If the server only returns data, who controls the answer?
 - [The client controls the final answer](concepts.md#the-client-controls-the-final-answer): Claude Desktop added uncited dosage ("2-3 sets of 8-12 reps each, twice a week") from its own knowledge.
 - [M1: What we saw](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): the key catch, and the M2 plan (research tools, stronger server instructions).
+- [Server instructions](concepts.md#server-instructions) and [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): the citation rule now goes in three places (server instructions, tool descriptions, field descriptions), plus research tools that return cited numbers. Claude Desktop not yet re-tested.
+- [Decision 0009](decisions/0009-ask-question-wraps-answer-question.md): `ask_question` returns rag-motion's own grounded, citation-checked answer instead of leaving all generation to Claude.
 - Interview line: "MCP gives the client the tools, but the client writes the answer, so you push your rules into tool outputs and server instructions."
 
 ## Tools/resources/prompts
 
 ### Tools vs resources vs prompts?
-- [Tools, resources and prompts](concepts.md#tools-resources-and-prompts): first tool built in M1; resources and prompts planned for M2.
-- Partial.
+- [Tools, resources and prompts](concepts.md#tools-resources-and-prompts): a tool is an action Claude decides to run; a resource is data read or attached without running anything, like opening a file; a prompt is a ready-made starting message the user picks from a menu.
+- [Resources and resource URIs](concepts.md#resources-and-resource-uris): `ragmotion://exercises`, `ragmotion://sources`.
+- [Prompts (MCP)](concepts.md#prompts-mcp): `new_client_intake`.
+- [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): all three built and listed through the in-memory client.
+
+### How do you handle a tool that needs several turns?
+- [Multi-turn tool with client-held state](concepts.md#multi-turn-tool-with-client-held-state): `build_program` returns `needs_info` with a question; Claude asks it and calls again with the whole conversation.
+- [Decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md): stateless server; the client carries the conversation.
+- [M2: What we saw](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): turn 1 asked for goal, days, equipment, level; turn 2 returned a 3-day program that passed all checks.
 
 ### How does the AI decide which tool to call?
 - [Tool registration](concepts.md#tool-registration): the docstring is the description Claude reads to decide WHEN to use the tool; a vague docstring means the wrong tool.
 - [M1](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): Claude Desktop chose `search_exercises` on its own for "My client is a beginner with only dumbbells. What leg exercises could she do?"
-- Partial: only one tool so far; no tool-choice eval yet (planned M6).
+- [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): with 4 tools, docstrings now point between them (`search_exercises` says to use `ask_question` for sets/reps questions; `search_sources` is for the evidence itself).
+- Partial: no tool-choice eval yet (planned M6).
 
 ### How do you design a tool's inputs and outputs?
 - [Input schema and output schema](concepts.md#input-schema-and-output-schema): typed inputs (equipment list, level enum), `limit` clamped to 1-10 so Claude can't ask for 500.
 - [Structured output and the "result" wrapper](concepts.md#structured-output-and-the-result-wrapper).
 - [Decision 0005](decisions/0005-level-filter-in-mcp-tool.md): level filter added from a coach observation.
 - [Decision 0008](decisions/0008-list-dict-output-for-m1.md): vague `list[dict]` output kept for M1, typed models in M2.
+- [Typed tool outputs and field descriptions](concepts.md#typed-tool-outputs-and-field-descriptions): M2's Pydantic models make each outputSchema list every field; field descriptions say how to use them ("cite it as [slug]").
+- [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): `search_sources` limit capped at 8; `build_program` returns a `status` field so Claude knows which other fields to read.
 
 ## Transports
 
@@ -70,6 +83,8 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [MCP server](concepts.md#mcp-server): the server is the connector; rag-motion and wger are reused as-is.
 - [Path dependency (editable)](concepts.md#path-dependency-editable) and [decision 0002](decisions/0002-separate-repo-with-editable-rag-motion.md): rag-motion imported, not copied.
 - [M1](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): the tool calls rag-motion's `search_exercises` and reuses its equipment rule (bodyweight always allowed). Cost: it inherits rag-motion's dependencies (the database being down broke the first call).
+- [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): `ask_question`, `search_sources` and `build_program` call rag-motion's `answer_question`, `search_all` and `run_turn` directly; the program flow works through MCP exactly as in rag-motion's web page.
+- [Decision 0009](decisions/0009-ask-question-wraps-answer-question.md): keep rag-motion's citation-checked answer rather than rebuild it in the client.
 
 ### How did you connect the server to Claude Desktop?
 - [Client config file and PATH for Dock apps](concepts.md#client-config-file-and-path-for-dock-apps).
@@ -89,6 +104,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 
 ### How do you keep a tool that writes data safe?
 - [Tool-call permission (human in the loop)](concepts.md#tool-call-permission-human-in-the-loop): Claude Desktop asks Deny / Allow once / Always allow; fine to always-allow a read-only search, not a write.
+- [Tool annotations](concepts.md#tool-annotations): M2 marks all four tools read-only, not destructive, not open-world, so clients can decide how carefully to ask permission. Hints, not enforcement.
 - Partial: the write tool and its confirmation are planned for M4.
 
 ### How do you defend against prompt injection in tool results?
@@ -98,6 +114,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 
 ### How do you evaluate an MCP server?
 - [M1](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): judged by eye so far, with coach observations (no level filter; Goblet Squat not in the top 5 for a vague query; uncited dosage in Claude's answer).
+- [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): live checks through the in-memory client with real models: `ask_question` returned a cited answer with full coverage and no citation problems; the two-turn `build_program` passed all program checks. Still judged by eye.
 - Partial: tool-choice accuracy and an end-to-end scenario planned for M6.
 
 ## Testing
@@ -105,7 +122,8 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 ### How do you test an MCP server?
 - [In-memory client](concepts.md#in-memory-client): call `list_tools` and `call_tool` from Python with no external client.
 - [MCP Inspector](concepts.md#mcp-inspector): play Claude's part, see the schema-built form and protocol messages, try awkward inputs (`level="expert"`), and separate server bugs from model behavior.
-- Partial: no automated tests yet (planned M2).
+- [Fakes in tests (monkeypatch)](concepts.md#fakes-in-tests-monkeypatch): 9 offline pytest tests through the in-memory client with rag-motion faked; 9 passed in 0.98 s. They check listing and read-only annotations, filters, limits, rejected bad inputs, citations kept separate from general guidance, and `build_program`'s status mapping and conversation pass-through.
+- [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): two layers: fast offline tests for wiring, live tests for the real pipeline. The live test caught a bug (`"where"` vs `"location"`) the fakes couldn't.
 
 ## Production
 
@@ -121,6 +139,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M0: How it was explained](build-log.md#m0-project-setup-pieces-1-3): Claude -> MCP server -> rag-motion (database, research, agent) and -> wger.
 - [M1](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): Claude Desktop launches the server over stdio on the laptop; the only internet call is rag-motion's embedding via OpenRouter; Claude is the "G" in RAG.
 - [Decision 0001](decisions/0001-coach-mcp-over-rag-motion-and-wger.md), [decision 0002](decisions/0002-separate-repo-with-editable-rag-motion.md), [decision 0006](decisions/0006-stdio-transport-for-local-use.md).
+- [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): the server is a thin, stateless layer: typed models in and out, rag-motion does the work; the client holds the program conversation ([decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md)).
 
 ## Tradeoffs
 
@@ -136,6 +155,16 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 ### Why filter in the MCP server instead of changing rag-motion?
 - [Decision 0005](decisions/0005-level-filter-in-mcp-tool.md): no change to rag-motion; cost is possibly fewer than `limit` results.
 
+### Why wrap the whole RAG answer as a tool when Claude can write answers itself?
+- [Decision 0009](decisions/0009-ask-question-wraps-answer-question.md): keeps rag-motion's grounded, citation-checked answer and separate general guidance; cost is an extra LLM call inside the tool.
+
+### Why keep the program tool stateless?
+- [Decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md): matches rag-motion's `run_turn`; no session storage; risk is the client passing the conversation back wrong (to check in M6).
+
+### How did you balance learning pace against speed?
+- [Decision 0004](decisions/0004-hands-on-pacing-with-explanations.md) and [decision 0011](decisions/0011-faster-pacing-from-m2.md): piece-by-piece for M0-M1, then build-then-walkthrough for M2 at the developer's request, still recording every explanation.
+
 ### Tell me about a problem you hit.
 - [M0: Problems and fixes](build-log.md#m0-project-setup-pieces-1-3): Python 3.11 vs rag-motion's `>=3.12`; the FastMCP tutorial import failing on mcp 2.3.
 - [M1: Problems and fixes](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): database down on the first call; Inspector v2.9 UI differing from docs; beginners getting intermediate exercises (fixed with a level filter); Claude Desktop blending uncited dosage into the answer (the best story: the client, not the server, writes the answer).
+- [M2: Problems and fixes](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): the program agent stores a passage's section as `"where"`, not `"location"`; caught only by the live test, not the fakes.

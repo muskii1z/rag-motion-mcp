@@ -16,3 +16,6 @@ Slower progress and longer docs.
 
 ## Revisit when
 The developer asks to move faster on parts they already understand.
+
+## Update (M2, 2026-10-07)
+The developer asked to "pick up the pace" for M2. See [decision 0011](0011-faster-pacing-from-m2.md). Recording explanations continues.
