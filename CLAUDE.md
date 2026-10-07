@@ -17,7 +17,7 @@ Second portfolio project, built to learn how MCP works and to show it in job app
 
 | Step | What | Status |
 |---|---|---|
-| M0 | Project setup: uv project, Python 3.12, `mcp` + `ragmotion` (path dependency), CLAUDE.md, build-scribe, docs/, private GitHub repo | in progress |
+| M0 | Project setup: uv project, Python 3.12, `mcp` + `ragmotion` (path dependency), CLAUDE.md, build-scribe, docs/, private GitHub repo | done (623ac2f; private repo https://github.com/muskii1z/rag-motion-mcp) |
 | M1 | Hello MCP: one tool (`search_exercises`), stdio, MCP Inspector, then Claude Desktop | |
 | M2 | rag-motion tools (`ask_question`, `search_sources`, `build_program`), resources, a prompt, tool annotations, tests | |
 | M3 | wger in Docker (local), fictional coach account, tokens in `.env` | |

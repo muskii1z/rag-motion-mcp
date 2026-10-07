@@ -76,7 +76,7 @@ uv run python -c "import mcp, ragmotion; ..."
 - *Email in pyproject?* Keep musab.work17@gmail.com (developer's choice).
 
 **Open questions.**
-- The M0 row in `CLAUDE.md` also lists "private GitHub repo". That piece is not covered by this brief, so it is still to do (along with the first commit).
+- The M0 row in `CLAUDE.md` also lists "private GitHub repo". **Done after this entry:** first commit 623ac2f, private repo created with `gh repo create rag-motion-mcp --private --source=. --remote=origin --push` (https://github.com/muskii1z/rag-motion-mcp).
 
 **Learned.**
 - [MCP (Model Context Protocol)](concepts.md#mcp-model-context-protocol)
