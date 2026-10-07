@@ -18,7 +18,7 @@ Second portfolio project, built to learn how MCP works and to show it in job app
 | Step | What | Status |
 |---|---|---|
 | M0 | Project setup: uv project, Python 3.12, `mcp` + `ragmotion` (path dependency), CLAUDE.md, build-scribe, docs/, private GitHub repo | done (623ac2f; private repo https://github.com/muskii1z/rag-motion-mcp) |
-| M1 | Hello MCP: one tool (`search_exercises`), stdio, MCP Inspector, then Claude Desktop | done: `search_exercises` (equipment + level filter, limit 1-10) in `src/rag_motion_mcp/server.py`; tested with the in-memory client and MCP Inspector v2.9; connected to Claude Desktop (full path to uv). Catch: Claude Desktop added uncited dosage from its own knowledge (fix in M2: research tools, stronger instructions, typed output) |
+| M1 | Hello MCP: one tool (`search_exercises`), stdio, MCP Inspector, then Claude Desktop | done (c510e13): `search_exercises` (equipment + level filter, limit 1-10) in `src/rag_motion_mcp/server.py`; tested with the in-memory client and MCP Inspector v2.9; connected to Claude Desktop (full path to uv). Catch: Claude Desktop added uncited dosage from its own knowledge (fix in M2: research tools, stronger instructions, typed output) |
 | M2 | rag-motion tools (`ask_question`, `search_sources`, `build_program`), resources, a prompt, tool annotations, tests | |
 | M3 | wger in Docker (local), fictional coach account, tokens in `.env` | |
 | M4 | `save_program_to_wger`: program to wger routine, coach-reviewed exercise map, confirmation, no duplicates | |

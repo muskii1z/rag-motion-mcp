@@ -10,7 +10,7 @@ Terms used throughout:
 ---
 
 ## M0: Project setup (pieces 1-3)
-**Date:** 2026-10-07 · **Commit:** not committed
+**Date:** 2026-10-07 · **Commit:** 623ac2f
 
 **Goal.** Create a new Python project for an MCP server that reuses rag-motion's code, with the same documentation habits as rag-motion.
 
@@ -100,7 +100,7 @@ uv run python -c "import mcp, ragmotion; ..."
 ---
 
 ## M1: Hello MCP: one tool, MCP Inspector, Claude Desktop
-**Date:** 2026-10-07 · **Commit:** not committed
+**Date:** 2026-10-07 · **Commit:** c510e13
 
 **Goal.** Build the smallest MCP server (one tool that calls rag-motion's exercise search), test it by hand, and use it from Claude Desktop.
 
