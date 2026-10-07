@@ -21,3 +21,8 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 ragmotion = { path = "../rag-motion", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
