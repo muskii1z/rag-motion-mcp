@@ -1,0 +1,234 @@
+{
+ "models": [
+  "google/gemini-2.5-flash-lite"
+ ],
+ "runs": 1,
+ "results": {
+  "google/gemini-2.5-flash-lite": {
+   "tool_choice": [
+    {
+     "run": 1,
+     "id": "band-upper-back",
+     "picked": "search_exercises",
+     "args": {
+      "question": "upper back",
+      "equipment": "band"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "beginner-dumbbell-squats",
+     "picked": "none",
+     "args": {},
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 1,
+     "id": "older-adult-bands",
+     "picked": "ask_question",
+     "args": {
+      "question": "Which exercises can a 70-year-old beginner do with resistance bands?"
+     },
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 1,
+     "id": "goblet-squat-equipment",
+     "picked": "search_exercises",
+     "args": {
+      "question": "goblet squat",
+      "limit": 1
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "rdl-muscles",
+     "picked": "search_exercises",
+     "args": {
+      "question": "Romanian Deadlift",
+      "limit": 1
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "weekly-sets-muscle",
+     "picked": "ask_question",
+     "args": {
+      "question": "How many sets per week should a beginner do to build muscle?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "rest-strength",
+     "picked": "ask_question",
+     "args": {
+      "question": "How long should clients rest between sets when training for strength?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "failure-research",
+     "picked": "search_sources",
+     "args": {
+      "query": "training close to failure"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "older-adult-guidelines",
+     "picked": "search_sources",
+     "args": {
+      "query": "strength training for older adults",
+      "population": "older-adults"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-complete",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "Build a 3-day program for my client: she wants to build muscle, has dumbbells and a bench, and is a beginner."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-vague",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "content": "I need a workout plan for a new client.",
+        "role": "user"
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-gym-4day",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "Make a 4-day full-gym program for an intermediate lifter who wants to get stronger."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "save-by-id",
+     "picked": "save_program_to_wger",
+     "args": {
+      "program_id": "33c8720fc4"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "how-is-she-doing",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "what-did-she-log",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "next-week-changes",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "routine-2-progress",
+     "picked": "none",
+     "args": {},
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 1,
+     "id": "greeting",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "poem",
+     "picked": "search_sources",
+     "args": {
+      "query": "squat form"
+     },
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 1,
+     "id": "diagnose",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "delete-routines",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "save-without-program",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    }
+   ],
+   "injection": []
+  }
+ }
+}

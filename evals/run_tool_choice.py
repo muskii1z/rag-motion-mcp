@@ -62,6 +62,10 @@ def score_choice(case: dict, msg) -> dict:
     for k, want in (case.get("args") or {}).items():
         got = first[1].get(k)
         ok_args &= (all(x in (got or []) for x in want) if isinstance(want, list) else str(got) == str(want))
+    if first[0] == "build_program":  # the call must be usable, not just aimed at the right tool (M6 find: plain strings)
+        conv = first[1].get("conversation")
+        ok_args &= isinstance(conv, list) and bool(conv) and all(
+            isinstance(m, dict) and m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str) for m in conv)
     return {"id": case["id"], "picked": first[0], "args": first[1], "tool_ok": ok_tool, "args_ok": ok_tool and ok_args}
 
 

@@ -11,11 +11,11 @@ M5: get_training_log, suggest_next_week (code decides, the AI explains); wger te
 import json
 import tomllib
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, WithJsonSchema
 from ragmotion.agent import run_turn
 from ragmotion.ingestion import PROJECT_ROOT as RAGMOTION_ROOT
 from ragmotion.models import Difficulty, Equipment, Population
@@ -168,8 +168,17 @@ def ask_question(question: str) -> CitedAnswer:
                        sources=[_passage(p) for p in r.passages], citation_problems=r.citation_problems)
 
 
+# The message shape written out in place (no "$ref"): some MCP clients drop $ref/$defs and show the model
+# "a list of anything", and a model in the M6 eval then sent plain strings (found by build-scribe).
+CONVERSATION_SCHEMA = {"type": "array", "description": "The conversation so far, oldest first.", "items": {
+    "type": "object", "required": ["role", "content"], "additionalProperties": False, "properties": {
+        "role": {"type": "string", "enum": ["user", "assistant"],
+                 "description": "user = the coach (or client); assistant = the program builder's earlier replies (its questions)."},
+        "content": {"type": "string"}}}}
+
+
 @server.tool(annotations=READ_ONLY)
-def build_program(conversation: list[Message]) -> ProgramResult:
+def build_program(conversation: Annotated[list[Message], WithJsonSchema(CONVERSATION_SCHEMA)]) -> ProgramResult:
     """Build a weekly training program for a client with rag-motion's program agent. Code plans the week,
     the agent fills it from the exercise library and the research, and code checks about 20 rules
     (equipment, level, weekly sets per muscle, citations, safety referrals).

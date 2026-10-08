@@ -100,3 +100,16 @@ def test_build_program_passes_the_whole_conversation_and_returns_the_checked_pro
     assert seen["conv"] == conv
     assert out["status"] == "program" and out["passed_checks"] and out["failed_checks"] == []
     assert out["sources"][0] == {"id": "notes-program-design-1", "source": "Notes", "where": "Sets", "url": None, "license": "", "text": "..."}
+
+
+def test_input_schemas_are_self_contained():
+    """No $ref/$defs: some clients drop them and the model then sees 'a list of anything' (M6)."""
+    import json
+    async def go():
+        async with Client(srv.server) as client:
+            return (await client.list_tools()).tools
+    for t in asyncio.run(go()):
+        text = json.dumps(t.input_schema)
+        assert "$ref" not in text and "$defs" not in text, t.name
+    conv = [t for t in asyncio.run(go()) if t.name == "build_program"][0].input_schema["properties"]["conversation"]
+    assert conv["items"]["required"] == ["role", "content"]
