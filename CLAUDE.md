@@ -20,7 +20,7 @@ Second portfolio project, built to learn how MCP works and to show it in job app
 | M0 | Project setup: uv project, Python 3.12, `mcp` + `ragmotion` (path dependency), CLAUDE.md, build-scribe, docs/, private GitHub repo | done (623ac2f; private repo https://github.com/muskii1z/rag-motion-mcp) |
 | M1 | Hello MCP: one tool (`search_exercises`), stdio, MCP Inspector, then Claude Desktop | done (c510e13): `search_exercises` (equipment + level filter, limit 1-10) in `src/rag_motion_mcp/server.py`; tested with the in-memory client and MCP Inspector v2.9; connected to Claude Desktop (full path to uv). Catch: Claude Desktop added uncited dosage from its own knowledge (fix in M2: research tools, stronger instructions, typed output) |
 | M2 | rag-motion tools (`ask_question`, `search_sources`, `build_program`), resources, a prompt, tool annotations, tests | done (70542ad): 4 read-only tools with typed outputs (`search_exercises`, `search_sources` with population filter, `ask_question` = rag-motion's cited answer, `build_program` = multi-turn, stateless, client carries the conversation); resources `ragmotion://exercises` and `ragmotion://sources`; prompt `new_client_intake`; citation rule in server instructions; 9 offline tests with fakes (`uv run pytest`). Live: cited rest answer, two-turn 3-day program passed all checks. Built faster at developer's request (build, then walkthrough). Claude Desktop not re-tested yet |
-| M3 | wger in Docker (local), fictional coach account, tokens in `.env` | |
+| M3 | wger in Docker (local), demo client account, API key in `.env` | done (ae433c7): official wger compose stack (7 containers) in `~/wger-docker` with local overrides (copies + setup in `wger/`), `127.0.0.1:8020`, 919 exercises synced (food, images, videos off for disk); fictional client `sarah_demo` with a personal API key, admin password changed, secrets only in `.env`; `WgerClient` (`src/rag_motion_mcp/wger.py`: Token auth, key as SecretStr, clear error when wger is down); 3 MockTransport tests (12 total). Disk-full incident on the way (Docker 500s, 0-byte `staticfiles.json`; fixed, rag-motion data intact). Note: wger drops unknown fields on write, so M4 checks the response body |
 | M4 | `save_program_to_wger`: program to wger routine, coach-reviewed exercise map, confirmation, no duplicates | |
 | M5 | `get_training_log` + `suggest_next_week` (code decides, AI explains with citations); prompt-injection guard on wger text | |
 | M6 | Evals: tool-choice accuracy (~20 coach requests) and an end-to-end scenario | |
@@ -31,7 +31,9 @@ Second portfolio project, built to learn how MCP works and to show it in job app
 - Python 3.12, managed with **uv** (`pyproject.toml` + `uv.lock`)
 - **MCP Python SDK** `mcp` 2.x. Note: in 2.x the server class is `from mcp.server import MCPServer`; most online tutorials use 1.x's `FastMCP` (`mcp.server.fastmcp`), which no longer exists
 - **rag-motion** as an editable path dependency: `[tool.uv.sources] ragmotion = { path = "../rag-motion", editable = true }`. Its Postgres must be running (`cd ~/rag-motion && docker compose up -d --wait`) and its `.env` holds the OpenRouter key
-- wger (from M3), httpx, pytest (added when needed)
+- **wger** (from M3): official compose stack, cloned to `~/wger-docker`, at http://localhost:8020 (laptop only). Start with `cd ~/wger-docker && docker compose up -d`; setup in `wger/README.md`. The server logs in with the fictional client's API key (`WGER_API_KEY` in `.env`) via `src/rag_motion_mcp/wger.py` (httpx + pydantic-settings)
+- **Docker Desktop must be running** for both rag-motion's Postgres and wger. Never use Docker's "Reset to factory defaults" or "Clean/Purge data": it erases every Docker database, including rag-motion's
+- pytest (dev dependency, from M2)
 
 ## Rules
 

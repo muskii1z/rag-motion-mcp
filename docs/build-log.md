@@ -318,3 +318,120 @@ uv run pytest -q
 - [0010. Stateless build_program; the client carries the conversation](decisions/0010-stateless-build-program-client-carries-conversation.md)
 - [0011. Faster pacing from M2: build the step, then walk through it](decisions/0011-faster-pacing-from-m2.md)
 - [0008. Keep list[dict] output for M1; typed models in M2](decisions/0008-list-dict-output-for-m1.md) (revisited: typed models added)
+
+## M3: wger in Docker (local), demo client account, API key in .env
+**Date:** 2026-10-07 to 2026-10-08 · **Commit:** ae433c7 (feat: M3 local wger in Docker and a wger API client)
+
+**Goal.** Run the open-source wger tracker locally and prove the server can log in to it with code.
+
+**What we did.**
+- **Looked up the official setup.** wger's docs point to Docker Compose (a tool that starts several linked containers from one file). The repo is `wger-project/docker` (license AGPL-3.0, 266 KB, updated 2026-09). The stack has 7 services: `web` (the wger app, image `wger/server`, run by gunicorn, a Python web server), `nginx` (the front door that receives browser requests and passes them on), `postgres` 15 (the database), `redis` (a fast in-memory cache), `celery` worker and beat (background jobs, and the timer that schedules them), and `powersync` (keeps wger's mobile app in sync). Default login: `admin` / `adminadmin`.
+- **Checked download sizes first** (arm64, compressed): `wger/server` 377 MB, `powersync` 124 MB, `nginx` 62 MB, `redis` 55 MB. `postgres:15-alpine` was already on the Mac. The developer approved the download and port 8020.
+- **Disk check: 3.1 GB free (99% full).** The developer approved removing two unused Docker images: `dashboard-proto-api` and `postgis/postgis:15-3.3` (3 years old; PostGIS is PostgreSQL with a maps/location add-on). macOS free space did not change, because Docker keeps all images inside one disk file on the Mac (27 GB used). Removing an image frees room inside that file for Docker to reuse.
+- **Config.** Cloned the compose repo to `~/wger-docker`. Added two files:
+  - `config/wger-local.env`: `SITE_URL` and `CSRF_TRUSTED_ORIGINS` for `localhost:8020`; `SYNC_EXERCISES_ON_STARTUP=True`; exercise images, videos and ingredient (food database) sync off; `DOWNLOAD_INGREDIENTS_FROM=None`; `ALLOW_REGISTRATION=False`.
+  - `docker-compose.override.yml`: uses that env file for `web`, `celery_worker` and `celery_beat`; replaces nginx's ports with `!override` to `"127.0.0.1:8020:80"` (this laptop only).
+  - Copies of both, with a setup README, are committed in this repo under [`wger/`](../wger/README.md).
+- **Incident: the disk filled up.** `docker compose pull` + `up` took free space down to 178 MB. `web` failed its health check, and macOS itself reported "no space left on device". Claude stopped the stack. Docker then started returning I/O errors (a missing image blob, i.e. a missing piece of a downloaded image). With the developer's approval, Claude cleared caches: npm cache (1.4 GB), Homebrew (437.5 MB), pip. `uv cache prune` was blocked by a lock, because the running MCP server (started with `uv run`) holds the uv cache. Free space rose to 2.7 GB, later 6.7 GB (Docker's disk file shrank after the restart).
+- **Docker Desktop restart.** The first restart hung. The dashboard showed "Engine running", but every API call (containers, images, volumes) returned HTTP 500 (a server-side error). A clean quit and reopen fixed it; the engine answered within seconds. Claude warned the developer not to use Docker's "Reset to factory defaults" or "Clean/Purge data", which would erase every Docker database, including rag-motion's.
+- **Checked rag-motion's data after the incident:** 60/60 exercises embedded, 358/358 passages embedded. Nothing lost.
+- **wger came up:** all 7 containers healthy, API version `2.8.0-dev.1`, 919 exercises synced from wger.de. But the web page returned HTTP 500: "Couldn't load manifest 'staticfiles.json'". Cause: the static-files index had been written as a 0-byte file while the disk was full. `collectstatic --clear` failed on the same broken file. Deleting `/home/wger/static/staticfiles.json` and running `collectstatic` rebuilt it (11410 unmodified, 3105 post-processed). The page then returned HTTP 200.
+- **Chose how to log in.** Read wger's OpenAPI schema (a machine-readable description of every API endpoint, at `/api/v2/schema?format=json`). Options: personal API key (`Authorization: Token <key>`), JWT access tokens (Bearer, short-lived), session cookie, OIDC. Chose the API key ([decision 0015](decisions/0015-wger-personal-api-key.md)). Schema notes for later steps:
+  - Unknown fields are silently dropped on write, so check the response body, not just the status code.
+  - List endpoints page through results with `limit`/`offset` and return `count`, `next`, `results`.
+  - Routine logs live at `/api/v2/routine/{id}/logs/`; there are also `workoutsession` and `workoutlog` endpoints.
+- **Created the accounts** (through Django's `manage.py shell` inside the container): the fictional client `sarah_demo` (Sarah Demo, `sarah_demo@example.com`) with a random password; her API key (a `rest_framework` Token); and a new random admin password. The secrets went only into `rag-motion-mcp/.env` (permissions `-rw-------`, git-ignored) and were never printed in chat. Committed `.env.example` with placeholders.
+- **Wrote `src/rag_motion_mcp/wger.py`:**
+  - `WgerSettings` (pydantic-settings, reads `.env` with prefix `WGER_`): `url` (default `http://localhost:8020`) and `api_key` as `SecretStr`, shown as `'**********'`.
+  - `WgerClient`: sends `Authorization: Token <key>` and `Accept: application/json` on every request to `<url>/api/v2/`; 15 s timeout; `get()`, `me()` (the `userprofile/` endpoint, proves the login works), `routines()`.
+  - `WgerUnavailable`: raised when wger can't be reached, with the message "Can't reach wger. Is it running? Start it with: cd ~/wger-docker && docker compose up -d".
+  - No MCP tool uses the client yet; that starts in M4.
+- **Live test:** logged in as `sarah_demo`, 0 routines. A wrong key returned 403 `{"detail": "Invalid token."}`.
+- **Wrote `tests/test_wger.py`** (3 tests, offline; httpx's `MockTransport` plays wger): the key is sent as `Token <key>`; the key is hidden when settings are printed; a wrong key raises an error; a down server raises `WgerUnavailable` mentioning `docker compose up`. 12 tests in total pass.
+- **Before committing,** checked the staged diff (the exact changes about to be committed) for real secrets. None.
+
+**Commands.**
+```bash
+gh api ...                          # wger-project/docker repo info and its compose file
+curl ... Docker Hub tag API         # compressed image sizes for arm64
+docker rmi ...                      # removed dashboard-proto-api and postgis/postgis:15-3.3
+git clone https://github.com/wger-project/docker.git ~/wger-docker
+docker compose config               # checked the merged config with the override file
+docker compose pull && docker compose up    # filled the disk to 178 MB free; web unhealthy
+docker compose stop                 # stopped the stack during the incident
+npm cache clean --force             # freed 1.4 GB
+brew cleanup -s                     # freed 437.5 MB
+pip cache purge                     # cleared pip's cache
+uv cache prune                      # blocked: the running MCP server (uv run) holds the uv cache lock
+# Docker Desktop: quit and reopen (the first restart hung with HTTP 500 on every API call)
+psql ...                            # rag-motion counts: 60/60 exercises, 358/358 passages embedded
+docker compose exec web sh -c 'rm -f /home/wger/static/staticfiles.json'
+docker compose exec web python3 manage.py collectstatic --no-input
+                                    # 11410 unmodified, 3105 post-processed; page now HTTP 200
+docker compose exec web python3 manage.py shell   # created sarah_demo, her API key, new admin password
+uv run pytest -q                    # 12 passed
+```
+The exact forms of `gh api`, `curl`, `docker rmi` and `psql` were not recorded in the brief. The `rm` and `collectstatic` lines are from [`wger/README.md`](../wger/README.md).
+
+**What we saw.**
+- All 7 wger containers healthy; API version `2.8.0-dev.1`; 919 exercises synced from wger.de.
+- After the static-files fix, the wger page loads at http://localhost:8020 (HTTP 200).
+- `sarah_demo` logs in through the API with her key and has 0 routines. A wrong key gets 403 `{"detail": "Invalid token."}`.
+- The Docker dashboard can show a stale "Engine running" while the engine is actually failing every request.
+- rag-motion's Postgres data survived the incident (60/60 exercises, 358/358 passages embedded).
+- Free disk space went 3.1 GB -> 178 MB (after the wger download) -> 2.7 GB (caches cleared) -> 6.7 GB (Docker's disk file shrank after the restart).
+
+**Problems and fixes.**
+- **The disk filled up.** Claude underestimated the space needed: it checked compressed download sizes, not the unpacked size, and images plus the database plus static files need more. Fix: cleared npm, Homebrew and pip caches, removed two unused images, and turned off wger's big downloads (food database, exercise images, videos). See [decision 0013](decisions/0013-skip-wger-food-images-videos-sync.md).
+- **Docker returned HTTP 500 on every call** after the first restart, while the dashboard said "Engine running". Fix: a clean quit and reopen of Docker Desktop. Not fixed with a factory reset, which would have erased rag-motion's database.
+- **wger page HTTP 500, "Couldn't load manifest 'staticfiles.json'".** The file was 0 bytes, written while the disk was full. `collectstatic --clear` failed on the broken file. Fix: delete the file, then run `collectstatic`.
+- **`uv cache prune` blocked** by the running MCP server's lock. Left as is.
+
+**How it was explained.**
+- **Can we use wger's exercises too, or does that defeat the purpose of rag-motion?** Yes we can, but not as the source of programs. wger's exercises are community-written and of mixed quality, while rag-motion's are original and coach-reviewed. The program checker needs each exercise's movement pattern, push/pull direction, level and exact equipment. wger doesn't store those in that format, and its exercises aren't embedded for search, so the program checks would stop working. wger's exercise texts are mostly CC-BY-SA (free to share, but with credit, and anything built from them must use the same license); rag-motion's catalog is the developer's own work. "rag-motion is the brain (it picks, checks and cites exercises); wger is the notebook (the program is stored there and the client logs there)." In M4 each of the 60 exercises gets linked to its matching wger exercise, so the routine shows wger's pages, images and mobile app while the choice stays rag-motion's. Later, the log tool can still read extra exercises a client logs, and importing wger's exercises into rag-motion with coach review and license tracking could be a future project.
+- **Docker's single disk file.** Docker keeps all images inside one disk file on the Mac. Deleting an image frees room inside that file for Docker to reuse, so macOS free space doesn't change right away.
+- **Caches** are temporary copies of downloads that tools re-fetch automatically when needed, so they are safe to clear.
+- **Why a full disk is so damaging.** Programs keep running but write empty or half-written files. The 0-byte `staticfiles.json` is exactly that.
+- **Don't use Docker's factory reset / purge.** It erases every Docker database, including rag-motion's.
+- **Why the server uses the client's own key.** A routine in wger belongs to one user account. So the server acts on the fictional client's account with her API key, like a coach managing a client's app with her permission.
+- **API key.** A long secret sent with every request as `Authorization: Token <key>`. Like a key card. `SecretStr` hides it in logs.
+- **"Unknown fields are dropped on write."** wger answers 200/201 (success) even if it ignored a field, so M4 must check the response body, not just the status code.
+
+**Developer questions.**
+- *"u can get rid of dashboard proto and idk what postgis is"*: PostGIS is PostgreSQL with a maps/location add-on; this image was 3 years old and unused. The developer then approved removing it and the wger download ("yes and yes").
+- *"ok let me know where are we at"*: Claude gave a status update during the Docker incident.
+- *"it looks reg to me"* (about the Docker dashboard): the dashboard showed its last-known state; the API calls kept failing until a clean restart.
+- *"are we able to use wger exercises as well? or does that defeat the purpose of rag-motion"*: see the first item in How it was explained, and [decision 0017](decisions/0017-rag-motion-exercises-source-of-truth.md).
+
+**Open questions.**
+- `wger.py` imports `httpx` and `pydantic_settings`, but neither is listed directly in `pyproject.toml`. `uv.lock` shows they arrive through other packages (`ragmotion` requires `pydantic-settings`; `langchain-core` and `huggingface-hub` require `httpx`). Should they be added as direct dependencies so the server doesn't rely on rag-motion's?
+- How much disk does the full wger stack use once unpacked? Not measured.
+- The uv cache was not pruned (blocked). Worth retrying when the MCP server is stopped?
+- Only one client account. Multiple clients would need per-client keys or wger's trainer/gym features ([decision 0016](decisions/0016-one-demo-client-account.md)).
+- The brief says the API key is a `rest_framework` Token. Does it expire or can it be rotated from wger's profile page? Not checked.
+
+**Learned.**
+- [Docker Compose stack and services](concepts.md#docker-compose-stack-and-services) (new)
+- [Override files and !override](concepts.md#override-files-and-override) (new)
+- [Binding to 127.0.0.1 (laptop only)](concepts.md#binding-to-127001-laptop-only) (new)
+- [Environment files](concepts.md#environment-files) (new)
+- [Docker's disk file and a full disk](concepts.md#dockers-disk-file-and-a-full-disk) (new)
+- [Caches](concepts.md#caches) (new)
+- [Static files and collectstatic](concepts.md#static-files-and-collectstatic) (new)
+- [OpenAPI schema and wger's API rules](concepts.md#openapi-schema-and-wgers-api-rules) (new)
+- [API authentication: API key vs JWT vs session vs OAuth](concepts.md#api-authentication-api-key-vs-jwt-vs-session-vs-oauth) (new)
+- [Source of truth (brain vs notebook)](concepts.md#source-of-truth-brain-vs-notebook) (new)
+- [Content licenses: CC-BY-SA](concepts.md#content-licenses-cc-by-sa) (new)
+- [SecretStr](concepts.md#secretstr) (new)
+- [Checking the staged diff for secrets](concepts.md#checking-the-staged-diff-for-secrets) (new)
+- [Mock transport for HTTP tests](concepts.md#mock-transport-for-http-tests) (new)
+- [MCP server](concepts.md#mcp-server) (extended: now also depends on wger and Docker Desktop)
+- [Transitive dependencies](concepts.md#transitive-dependencies) (extended: httpx and pydantic-settings come in through rag-motion)
+
+**Decisions.**
+- [0012. Official wger compose setup with local overrides](decisions/0012-official-wger-compose-with-overrides.md)
+- [0013. Skip wger's food database, exercise images and videos](decisions/0013-skip-wger-food-images-videos-sync.md)
+- [0014. wger on port 8020, laptop only](decisions/0014-wger-port-8020-laptop-only.md)
+- [0015. Log in to wger with a personal API key](decisions/0015-wger-personal-api-key.md)
+- [0016. One fictional client account (sarah_demo)](decisions/0016-one-demo-client-account.md)
+- [0017. rag-motion exercises stay the source of truth](decisions/0017-rag-motion-exercises-source-of-truth.md)

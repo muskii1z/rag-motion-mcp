@@ -91,20 +91,39 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Decision 0007](decisions/0007-full-path-to-uv-in-client-config.md): full path to uv; config backed up first; Cmd+Q to reload.
 
 ### How did you connect to wger?
-*Not yet covered* (planned M3-M4).
+- [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): wger runs locally from its official Docker Compose stack (7 containers) on `127.0.0.1:8020`; `WgerClient` in `src/rag_motion_mcp/wger.py` logs in with the fictional client's API key and reads her profile and routines. No MCP tool uses it yet (M4).
+- [Docker Compose stack and services](concepts.md#docker-compose-stack-and-services), [override files and !override](concepts.md#override-files-and-override), [binding to 127.0.0.1](concepts.md#binding-to-127001-laptop-only).
+- [OpenAPI schema and wger's API rules](concepts.md#openapi-schema-and-wgers-api-rules): read the schema first; pagination, log endpoints, unknown fields silently dropped.
+- [Decision 0012](decisions/0012-official-wger-compose-with-overrides.md), [decision 0014](decisions/0014-wger-port-8020-laptop-only.md), [decision 0015](decisions/0015-wger-personal-api-key.md).
+- Partial: writing to wger is M4.
+
+### How do you know a write to an external API actually worked?
+- [OpenAPI schema and wger's API rules](concepts.md#openapi-schema-and-wgers-api-rules): wger answers 200/201 even when it ignored a field, so the response body must be checked, not just the status code.
+- Partial: the write tool is M4.
+
+### How do you handle the external service being down?
+- [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): `WgerUnavailable` gives a clear message with the start command (`cd ~/wger-docker && docker compose up -d`); a test checks it.
+- [MCP server](concepts.md#mcp-server): the server now depends on rag-motion's Postgres and wger, both in Docker.
 
 ## Authentication and secrets
 
 ### How do you handle API keys and logins?
 - [M0](build-log.md#m0-project-setup-pieces-1-3): `.gitignore` excludes `.env` and per-machine Claude settings. rag-motion's `.env` holds the OpenRouter key.
 - [MCP Inspector](concepts.md#mcp-inspector): the Inspector URL carries a session token; crop it out of public screenshots.
-- Partial: wger tokens not added yet (planned M3).
+- [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): the client's wger API key, her password and a new random admin password were created in code and written only to the git-ignored `.env` (permissions `-rw-------`), never printed in chat; `.env.example` has placeholders.
+- [SecretStr](concepts.md#secretstr): the key is masked in logs; a test checks printing the settings doesn't show it.
+- [Checking the staged diff for secrets](concepts.md#checking-the-staged-diff-for-secrets): reviewed before the M3 commit.
+- [API authentication: API key vs JWT vs session vs OAuth](concepts.md#api-authentication-api-key-vs-jwt-vs-session-vs-oauth) and [decision 0015](decisions/0015-wger-personal-api-key.md): why a long-lived API key over 10-minute JWTs, and the cost.
+
+### Whose account does the server act as?
+- [Decision 0016](decisions/0016-one-demo-client-account.md): a routine belongs to one wger user, so the server uses the fictional client `sarah_demo`'s own key, "like a coach managing a client's app with permission". One client only for now.
 
 ## Security and prompt injection
 
 ### How do you keep a tool that writes data safe?
 - [Tool-call permission (human in the loop)](concepts.md#tool-call-permission-human-in-the-loop): Claude Desktop asks Deny / Allow once / Always allow; fine to always-allow a read-only search, not a write.
 - [Tool annotations](concepts.md#tool-annotations): M2 marks all four tools read-only, not destructive, not open-world, so clients can decide how carefully to ask permission. Hints, not enforcement.
+- [Binding to 127.0.0.1](concepts.md#binding-to-127001-laptop-only) and [decision 0014](decisions/0014-wger-port-8020-laptop-only.md): the wger it writes to is reachable from this laptop only; sign-ups are off.
 - Partial: the write tool and its confirmation are planned for M4.
 
 ### How do you defend against prompt injection in tool results?
@@ -124,6 +143,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [MCP Inspector](concepts.md#mcp-inspector): play Claude's part, see the schema-built form and protocol messages, try awkward inputs (`level="expert"`), and separate server bugs from model behavior.
 - [Fakes in tests (monkeypatch)](concepts.md#fakes-in-tests-monkeypatch): 9 offline pytest tests through the in-memory client with rag-motion faked; 9 passed in 0.98 s. They check listing and read-only annotations, filters, limits, rejected bad inputs, citations kept separate from general guidance, and `build_program`'s status mapping and conversation pass-through.
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): two layers: fast offline tests for wiring, live tests for the real pipeline. The live test caught a bug (`"where"` vs `"location"`) the fakes couldn't.
+- [Mock transport for HTTP tests](concepts.md#mock-transport-for-http-tests) and [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): 3 offline tests where httpx's `MockTransport` plays wger (auth header, hidden key, wrong key, server down). 12 tests in total. Live check: real login as `sarah_demo`, and a wrong key got 403.
 
 ## Production
 
@@ -131,6 +151,8 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Decision 0002](decisions/0002-separate-repo-with-editable-rag-motion.md): today it needs `../rag-motion` next to it, plus rag-motion's Postgres and `.env`.
 - [Decision 0006](decisions/0006-stdio-transport-for-local-use.md): stdio is local only; hosting would need HTTP.
 - [Decision 0007](decisions/0007-full-path-to-uv-in-client-config.md): the client config uses machine-specific paths.
+- [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): wger is a 7-container stack on this laptop; Docker Desktop must be running for both wger and rag-motion's Postgres. [Decisions 0012-0016](decisions/README.md) are all local-only choices (laptop-only port, long-lived API key, one demo account, no images/videos).
+- [Docker's disk file and a full disk](concepts.md#dockers-disk-file-and-a-full-disk): resource planning matters; compressed download sizes understate the real need.
 - Partial.
 
 ## Architecture
@@ -139,6 +161,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M0: How it was explained](build-log.md#m0-project-setup-pieces-1-3): Claude -> MCP server -> rag-motion (database, research, agent) and -> wger.
 - [M1](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): Claude Desktop launches the server over stdio on the laptop; the only internet call is rag-motion's embedding via OpenRouter; Claude is the "G" in RAG.
 - [Decision 0001](decisions/0001-coach-mcp-over-rag-motion-and-wger.md), [decision 0002](decisions/0002-separate-repo-with-editable-rag-motion.md), [decision 0006](decisions/0006-stdio-transport-for-local-use.md).
+- [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env) and [source of truth (brain vs notebook)](concepts.md#source-of-truth-brain-vs-notebook): "rag-motion is the brain (it picks, checks and cites exercises); wger is the notebook (the program is stored there and the client logs there)." [Decision 0017](decisions/0017-rag-motion-exercises-source-of-truth.md).
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): the server is a thin, stateless layer: typed models in and out, rag-motion does the work; the client holds the program conversation ([decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md)).
 
 ## Tradeoffs
@@ -161,6 +184,17 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 ### Why keep the program tool stateless?
 - [Decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md): matches rag-motion's `run_turn`; no session storage; risk is the client passing the conversation back wrong (to check in M6).
 
+### Why not use wger's 919 exercises instead of rag-motion's 60?
+- [Decision 0017](decisions/0017-rag-motion-exercises-source-of-truth.md) and [source of truth](concepts.md#source-of-truth-brain-vs-notebook): community-written, mixed quality, missing the fields the program checker needs, not embedded for search.
+- [Content licenses: CC-BY-SA](concepts.md#content-licenses-cc-by-sa): credit and share-alike duties.
+
+### Why an API key instead of short-lived tokens?
+- [Decision 0015](decisions/0015-wger-personal-api-key.md): simplest for a local server; JWTs expire every 10 minutes and need refresh code. Cost: a long-lived secret, kept only in `.env`.
+
+### Why the official 7-container wger setup instead of the one-container demo?
+- [Decision 0012](decisions/0012-official-wger-compose-with-overrides.md): official, current, includes mobile-app sync; cost is disk, which caused the M3 incident.
+- [Decision 0013](decisions/0013-skip-wger-food-images-videos-sync.md): turned off food, image and video sync to fit the disk; kept the exercise list for M4's mapping.
+
 ### How did you balance learning pace against speed?
 - [Decision 0004](decisions/0004-hands-on-pacing-with-explanations.md) and [decision 0011](decisions/0011-faster-pacing-from-m2.md): piece-by-piece for M0-M1, then build-then-walkthrough for M2 at the developer's request, still recording every explanation.
 
@@ -168,3 +202,4 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M0: Problems and fixes](build-log.md#m0-project-setup-pieces-1-3): Python 3.11 vs rag-motion's `>=3.12`; the FastMCP tutorial import failing on mcp 2.3.
 - [M1: Problems and fixes](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): database down on the first call; Inspector v2.9 UI differing from docs; beginners getting intermediate exercises (fixed with a level filter); Claude Desktop blending uncited dosage into the answer (the best story: the client, not the server, writes the answer).
 - [M2: Problems and fixes](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): the program agent stores a passage's section as `"where"`, not `"location"`; caught only by the live test, not the fakes.
+- [M3: Problems and fixes](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): the disk-full incident. Claude read compressed image sizes and underestimated the space; the disk hit 178 MB free; Docker returned HTTP 500 on every call while its dashboard said "Engine running"; wger's pages broke on a 0-byte `staticfiles.json`. Fixes: cleared caches and unused images (with approval), clean Docker restart instead of a factory reset (which would have erased rag-motion's database), verified rag-motion's data (60/60, 358/358), rebuilt the static files, turned off big downloads. See [Docker's disk file and a full disk](concepts.md#dockers-disk-file-and-a-full-disk) and [static files and collectstatic](concepts.md#static-files-and-collectstatic).

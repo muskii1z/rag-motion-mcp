@@ -18,6 +18,8 @@ One small program that an AI assistant connects to. It offers tools (for this pr
 
 Added in M1: because the server calls rag-motion's code, it depends on everything rag-motion depends on. The first test call failed with rag-motion's "Can't reach the database. Is Docker running?" until Docker and rag-motion's Postgres were started.
 
+Added in M3: the server now also talks to wger over its web API, so wger must be running too. Both rag-motion's Postgres and wger run in Docker, so Docker Desktop must be running for either to work. If wger is down, the client raises a clear "Can't reach wger. Is it running?" message with the start command.
+
 **In an interview:** "The MCP server is a thin connector: the assistant picks which tool to call, and the server runs my existing rag-motion code or talks to wger and sends back the result. The flip side is that it inherits all of rag-motion's dependencies, like its database."
 
 *First seen: M0.*
@@ -173,6 +175,13 @@ A fake is a small stand-in for a real function. pytest's `monkeypatch` swaps a n
 
 *First seen: M2.*
 
+### Mock transport for HTTP tests
+A way to test code that calls a web API without the real server. httpx (the Python HTTP library the wger client uses) lets you swap its "transport" (the part that actually sends requests over the network) for a `MockTransport`: a small function that receives each request and returns a made-up response. In `tests/test_wger.py` it plays wger: it records the `Authorization` header, answers 403 `{"detail": "Invalid token."}` for a wrong key, or raises a connection error to act like wger is down. Same idea as M2's fakes, but one layer lower: the real client code runs, only the network is fake.
+
+**In an interview:** "I test my wger client offline with httpx's MockTransport, which stands in for the server, so I can check the auth header, a rejected key and a down server in milliseconds without Docker running."
+
+*First seen: M3.*
+
 ### MCP Inspector
 An official testing tool from the MCP project (under the Linux Foundation), separate from the Python SDK. The SDK is the library inside the server; the Inspector is a stand-alone JavaScript web app, started with `npx` (Node's download-and-run command), that works with any MCP server in any language because it only speaks the protocol. "It's like FastAPI's /docs page in rag-motion, but for MCP." You play the part Claude will play: you see exactly what Claude sees (the docstring description, a form built from the schema), test the server before Claude is involved (so you know whether a later problem is the server or Claude), and try awkward inputs on purpose. Notes from v2.9: the server card is named after the start command ("uv"); clicking the card does nothing, use Tools in the top menu; the URL holds a session token (`MCP_INSPECTOR_API_TOKEN`), local and new each run, but crop it out of public screenshots.
 
@@ -189,6 +198,87 @@ Claude Desktop reads its MCP servers from `~/Library/Application Support/Claude/
 
 *First seen: M1.*
 
+## Docker and local services
+
+### Docker Compose stack and services
+Docker runs programs in containers (sealed boxes with everything the program needs). Docker Compose starts several containers together from one file; each is a "service". wger's stack has 7: `web` (the wger app itself, run by gunicorn, a Python web server), `nginx` (a reverse proxy: the front door that receives browser requests and passes them to `web`), `postgres` (the database), `redis` (a cache: a fast in-memory store for things asked for often), `celery_worker` and `celery_beat` (background jobs, such as syncing exercises, and the timer that schedules them), and `powersync` (syncs wger's mobile app). rag-motion's Postgres is a one-service Compose stack.
+
+**In an interview:** "I ran wger from its official Docker Compose stack: web app, nginx reverse proxy, Postgres, Redis cache, Celery workers for background jobs, and a mobile-sync service. Seven containers, started with one command."
+
+*First seen: M3.*
+
+### Override files and !override
+Docker Compose automatically merges `docker-compose.override.yml` on top of the main `docker-compose.yml`. That lets you change a project you cloned without editing its files, so updating from upstream stays easy. Normally lists (like ports) are added together when merged; the `!override` tag says "replace this list instead". We used it to replace nginx's ports with `"127.0.0.1:8020:80"` and to give `web` and the celery services our own settings file. `docker compose config` shows the merged result.
+
+**In an interview:** "I kept wger's official compose files untouched and put my changes in an override file, using !override to replace the port list rather than add to it."
+
+*First seen: M3.*
+
+### Binding to 127.0.0.1 (laptop only)
+A port mapping like `"127.0.0.1:8020:80"` means: port 80 inside the container is reachable at port 8020 on this computer, but only from this computer. `127.0.0.1` (also called localhost) is the machine's address for itself. Without it, the port can be open to other devices on the same network.
+
+**In an interview:** "Local services bind to 127.0.0.1, so wger is reachable from my laptop only, not from anyone else on the Wi-Fi."
+
+*First seen: M3.*
+
+### Environment files
+Plain text files of `NAME=value` lines that set a program's configuration without changing its code. Docker Compose can pass one to a container (`env_file:`); our `config/wger-local.env` sets wger's site address, which data to sync, and turns off sign-ups. The project's own `.env` holds secrets (the wger API key and passwords) and is git-ignored; `.env.example` shows the names with placeholder values.
+
+**In an interview:** "Configuration and secrets live in env files: wger's settings in a local env file passed by Compose, and my server's credentials in a git-ignored .env with a committed example."
+
+*First seen: M3.*
+
+### Docker's disk file and a full disk
+On a Mac, Docker keeps all images, containers and volumes (stored data, like databases) inside one big disk file (27 GB here). Deleting an image frees room inside that file, which Docker reuses, so macOS free space doesn't change right away. Download sizes on Docker Hub are compressed; unpacked images plus a database plus generated files need much more. When the disk fills, programs keep running but write empty or half-written files (wger's 0-byte `staticfiles.json`), and Docker itself can break (I/O errors, a missing image blob, HTTP 500 from every API call). Never fix this with Docker's "Reset to factory defaults" or "Clean/Purge data": they erase every Docker database, including rag-motion's.
+
+**In an interview:** "I underestimated disk by reading compressed image sizes. The full disk left a 0-byte file that broke wger's pages and wedged Docker. I freed space, did a clean restart instead of a factory reset, verified my other database was intact, then rebuilt the broken file."
+
+*First seen: M3.*
+
+### Caches
+Temporary copies of downloads that tools keep so they don't fetch the same thing twice (npm, Homebrew, pip, uv). They are safe to clear: tools re-fetch what they need. Clearing npm (1.4 GB) and Homebrew (437.5 MB) caches rescued the full disk in M3. A cache that a running program is using can be locked: `uv cache prune` was blocked because the running MCP server (started with `uv run`) held uv's cache.
+
+**In an interview:** "Package-manager caches are the first safe thing to clear when a dev machine runs out of space; they're just re-downloadable copies."
+
+*First seen: M3.*
+
+### Static files and collectstatic
+Static files are the fixed files a website sends unchanged: stylesheets, JavaScript, icons. wger is a Django app (Django is a Python web framework); `manage.py collectstatic` gathers them into one folder and writes an index, `staticfiles.json`, that maps each file to its versioned name. If the index is missing or broken, every page fails ("Couldn't load manifest 'staticfiles.json'", HTTP 500). Fix used in M3: delete the 0-byte file, then run `collectstatic` again (11410 unmodified, 3105 post-processed).
+
+**In an interview:** "wger's pages 500'd because the static-files manifest was written as 0 bytes during a full disk. collectstatic --clear choked on the same file, so I deleted it and regenerated it."
+
+*First seen: M3.*
+
+## Integrations
+
+### OpenAPI schema and wger's API rules
+An OpenAPI schema is a machine-readable description of every endpoint (URL) of a web API: what it accepts, what it returns, how to log in. wger's is at `/api/v2/schema?format=json`. Reading it showed rules that matter for M4 and M5: list endpoints page through results with `limit`/`offset` and return `count`, `next`, `results`; routine logs are at `/api/v2/routine/{id}/logs/`; and unknown fields are silently dropped on write. That last one means wger answers 200/201 (success) even if it ignored a field, so the code must check the response body, not just the status code.
+
+**In an interview:** "I read wger's OpenAPI schema before writing code. It told me the auth options, pagination, and that unknown fields are silently dropped, so my write tool in M4 has to check the saved object instead of trusting a 201."
+
+*First seen: M3.*
+
+### API authentication: API key vs JWT vs session vs OAuth
+Ways a program proves who it is to an API. An **API key** is a long secret sent with every request (wger: `Authorization: Token <key>`), like a key card; simple, but long-lived. A **JWT** (JSON Web Token) is a short-lived signed token (`Bearer`), wger's expire every 10 minutes and need refreshing. A **session cookie** is how a browser stays logged in. **OAuth/OIDC** is the standard "log in with another account" flow for apps acting for users. In wger a routine belongs to one user, so the server uses the fictional client's own API key, "like a coach managing a client's app with permission". A wrong key gets 403 `{"detail": "Invalid token."}`.
+
+**In an interview:** "For a local integration I chose wger's personal API key over JWTs that expire every 10 minutes: one header, no refresh logic. The cost is a long-lived secret, so it lives only in .env as a SecretStr."
+
+*First seen: M3.*
+
+### Source of truth (brain vs notebook)
+The source of truth is the one place whose data wins when two systems hold similar things. Here: "rag-motion is the brain (it picks, checks and cites exercises); wger is the notebook (the program is stored there and the client logs there)." wger has 919 community exercises, but rag-motion's program checker needs movement pattern, push/pull direction, level and exact equipment, which wger doesn't store in that form, and wger's exercises aren't embedded for search. So wger exercises are only link targets: in M4 each of rag-motion's 60 exercises gets linked to its wger match.
+
+**In an interview:** "I kept one source of truth: rag-motion chooses and checks exercises, and wger only stores the routine and the logs. Mixing in wger's community exercises would have broken the program checks."
+
+*First seen: M3.*
+
+### Content licenses: CC-BY-SA
+CC-BY-SA (Creative Commons Attribution-ShareAlike) is a license for content: free to share and adapt, but you must give credit, and anything built from it must use the same license. Most of wger's exercise texts use it, while rag-motion's catalog is the developer's own work. (wger's Docker setup itself is AGPL-3.0, an open-source software license.) Mixing licensed content into rag-motion would need license tracking, as rag-motion already does for its sources.
+
+**In an interview:** "wger's exercise texts are CC-BY-SA, so importing them would carry attribution and share-alike duties. I kept my original catalog separate and only link to wger's entries."
+
+*First seen: M3.*
+
 ## Security
 
 ### Tool-call permission (human in the loop)
@@ -197,6 +287,20 @@ MCP's built-in safety step: the AI can ask to use a tool, and the person decides
 **In an interview:** "The client asks the user before each tool call. That's fine to auto-approve for read-only tools, but for tools that write data I want the human to confirm every time."
 
 *First seen: M1.*
+
+### SecretStr
+A Pydantic type for secrets. When printed or logged, it shows `'**********'` instead of the value; code must call `.get_secret_value()` on purpose to use the real key. In `wger.py`, `WgerSettings` (built on pydantic-settings, which fills settings from `.env` and environment variables, here with the prefix `WGER_`) holds `api_key` as a `SecretStr`, so the key never ends up in a log by accident. A test checks that `repr()` of the settings doesn't contain the key.
+
+**In an interview:** "Secrets load from a git-ignored .env into a SecretStr, so they're masked in logs and error messages, and a test makes sure printing the settings never shows the key."
+
+*First seen: M3.*
+
+### Checking the staged diff for secrets
+"Staged" means the changes picked with `git add` to go into the next commit; the staged diff is exactly what will be saved in history. Before the M3 commit, Claude checked it for real secrets (none found). Only `.env.example` with placeholders was committed; the real `.env` is git-ignored and has permissions `-rw-------` (only the owner can read or write it). Once a key is in git history, deleting the file later doesn't remove it.
+
+**In an interview:** "Before committing anything near credentials, I review the staged diff for real values. The real .env is git-ignored and locked to my user; only a placeholder .env.example is in the repo."
+
+*First seen: M3.*
 
 ## Python tooling
 
@@ -225,6 +329,8 @@ A dependency installed from a folder on your computer instead of from the intern
 
 ### Transitive dependencies
 Libraries pull in their own helpers: dependencies of dependencies. That is why `uv add mcp` also installed uvicorn, pydantic, and others. The lock file (`uv.lock`) records all of them at exact versions.
+
+Added in M3: the new `wger.py` imports `httpx` and `pydantic_settings`, yet neither is listed in this project's `pyproject.toml`. They work because they arrive transitively (`uv.lock`: `ragmotion` requires `pydantic-settings`; `langchain-core` and `huggingface-hub` require `httpx`). Open question: list them directly, so the server doesn't depend on rag-motion's choices.
 
 **In an interview:** "Adding one package brings in its whole dependency tree; the lock file pins every one so the environment is reproducible."
 
