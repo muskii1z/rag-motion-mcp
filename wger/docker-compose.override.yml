@@ -1,0 +1,14 @@
+# rag-motion-mcp local setup: own settings file, and port 8020 on this laptop only (not 80, not the network)
+services:
+  web:
+    env_file:
+      - ./config/wger-local.env
+  celery_worker:
+    env_file:
+      - ./config/wger-local.env
+  celery_beat:
+    env_file:
+      - ./config/wger-local.env
+  nginx:
+    ports: !override
+      - "127.0.0.1:8020:80"
