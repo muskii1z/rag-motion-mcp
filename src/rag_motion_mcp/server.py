@@ -4,10 +4,12 @@ Claude (or any MCP client) starts this program, asks it what it offers, and uses
 The real work is done by rag-motion's own code; this file only connects it to MCP.
 
 M1: search_exercises.  M2: ask_question, search_sources, build_program, two resources, one prompt.
+M4: save_program_to_wger (the first tool that changes data).
 """
 
 import json
 import tomllib
+from pathlib import Path
 from typing import Literal
 
 from mcp.server import MCPServer
@@ -21,8 +23,15 @@ from ragmotion.rag import answer_question
 from ragmotion.retrieval import search_all
 from ragmotion.retrieval import search_exercises as rag_search_exercises
 
+from rag_motion_mcp.save import program_id as make_program_id
+from rag_motion_mcp.save import save_program
+from rag_motion_mcp.wger import WgerClient, WgerUnavailable
+
 LEVELS = ["beginner", "intermediate", "advanced"]  # a client's level allows its own level and every easier one
 POOL = 40  # rag-motion's search can't filter by level, so ask for a bigger pool and filter here
+# Every program build_program makes is stored here under a short id, so saving it never depends on the
+# AI copying a big program back correctly (git-ignored; fictional clients only).
+PROGRAMS_DIR = Path(__file__).resolve().parents[2] / "programs"
 
 # 1. Create the server. The instructions are sent to Claude when it connects. They carry rag-motion's
 #    rule (facts only from evidence, cited) because the server can't control how Claude writes its answer
@@ -79,6 +88,7 @@ class Message(BaseModel):
 
 
 class ProgramResult(BaseModel):
+    program_id: str | None = Field(default=None, description="For program: pass this id to save_program_to_wger to save it.")
     status: Literal["needs_info", "program", "message", "error"] = Field(
         description="needs_info: ask the coach `question`, then call again with the whole conversation. "
         "program: a finished, checked program. message: a reply that is not a program (e.g. a refusal). error: failed.")
@@ -173,8 +183,43 @@ def build_program(conversation: list[Message]) -> ProgramResult:
     sources = [Passage(id=pid, source=p.get("source", ""), where=p.get("where") or "", url=None,
                        license=p.get("license", ""), text=p.get("text", ""))
                for pid, p in turn.passages.items()]
-    return ProgramResult(status="program", program=turn.program, passed_checks=turn.passed_checks,
+    pid = make_program_id(turn.program)
+    PROGRAMS_DIR.mkdir(exist_ok=True)
+    (PROGRAMS_DIR / f"{pid}.json").write_text(json.dumps(turn.program, indent=1))
+    return ProgramResult(status="program", program_id=pid, program=turn.program, passed_checks=turn.passed_checks,
                          failed_checks=[c["name"] for c in turn.checks if not c["passed"]], sources=sources)
+
+
+class SavedRoutine(BaseModel):
+    status: Literal["created", "already_saved", "failed"] = Field(
+        description="created: saved now. already_saved: this exact program was saved before (nothing new written). failed: nothing kept.")
+    routine_id: int | None = None
+    url: str | None = Field(default=None, description="Link to the routine in wger (the coach must be logged in).")
+    days: int = 0
+    exercises: int = 0
+    verified: bool = Field(default=False, description="True if wger's stored routine was read back and matches the program.")
+    problems: list[str] = Field(default_factory=list)
+
+
+@server.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False))
+def save_program_to_wger(program_id: str) -> SavedRoutine:
+    """Save a program made by build_program into the client's wger tracker as a routine, so they can
+    follow and log it in the wger app. This CHANGES data in wger: only call it after the coach has seen
+    the program and asked to save or send it.
+
+    program_id: the program_id returned by build_program (the server saves exactly that checked program;
+      don't retype the program).
+    The routine starts next Monday, with training days spread across the week and rest days between.
+    Saving the same program twice does not create a second copy.
+    """
+    path = PROGRAMS_DIR / f"{program_id}.json"
+    if not path.is_file() or not program_id.isalnum():
+        return SavedRoutine(status="failed", problems=[f"no program with id {program_id!r}; build it with build_program first"])
+    try:
+        r = save_program(json.loads(path.read_text()), WgerClient())
+    except WgerUnavailable as e:
+        return SavedRoutine(status="failed", problems=[str(e)])
+    return SavedRoutine(**r.__dict__)
 
 
 # ---- 3. Resources: data Claude (or the user) can read and attach, without running a search ----

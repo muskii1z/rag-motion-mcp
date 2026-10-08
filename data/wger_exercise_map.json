@@ -1,0 +1,305 @@
+{
+ "_note": "rag-motion slug -> wger exercise id. Coach-reviewed 2026-10-08. wger_id null = custom exercise created by scripts/create_custom_exercises.py",
+ "map": {
+  "a-skip": {
+   "wger_id": 1318,
+   "wger_name": "High Knee Skips HD",
+   "how": "coach-accepted close match"
+  },
+  "band-assisted-pull-up": {
+   "wger_id": 1929,
+   "wger_name": "Assisted Pull-Up",
+   "how": "name match, coach-approved"
+  },
+  "band-biceps-curl": {
+   "wger_id": 2070,
+   "wger_name": "Band Biceps Curl",
+   "how": "custom exercise in local wger (rag-motion text)"
+  },
+  "band-lateral-walk": {
+   "wger_id": 1514,
+   "wger_name": "Lateral Walk",
+   "how": "coach-accepted close match"
+  },
+  "band-pull-apart": {
+   "wger_id": 1380,
+   "wger_name": "Band pull-aparts",
+   "how": "name match, coach-approved"
+  },
+  "barbell-back-squat": {
+   "wger_id": 615,
+   "wger_name": "Squats",
+   "how": "coach-corrected"
+  },
+  "barbell-bench-press": {
+   "wger_id": 73,
+   "wger_name": "Bench Press",
+   "how": "name match, coach-approved"
+  },
+  "barbell-bent-over-row": {
+   "wger_id": 1698,
+   "wger_name": "Barbell Row (Overhand)",
+   "how": "coach-corrected"
+  },
+  "barbell-deadlift": {
+   "wger_id": 184,
+   "wger_name": "Deadlifts",
+   "how": "coach-corrected"
+  },
+  "bench-dip": {
+   "wger_id": 197,
+   "wger_name": "Dips Between Two Benches",
+   "how": "coach-accepted close match"
+  },
+  "bird-dog": {
+   "wger_id": 1572,
+   "wger_name": "Bird Dog",
+   "how": "name match, coach-approved"
+  },
+  "bodyweight-squat": {
+   "wger_id": 1312,
+   "wger_name": "Bodyweight Squat HD",
+   "how": "name match, coach-approved"
+  },
+  "bounding": {
+   "wger_id": 2071,
+   "wger_name": "Bounding",
+   "how": "custom exercise in local wger (rag-motion text)"
+  },
+  "box-jump": {
+   "wger_id": 1373,
+   "wger_name": "box jumps",
+   "how": "name match, coach-approved"
+  },
+  "box-squat": {
+   "wger_id": 977,
+   "wger_name": "Box squat",
+   "how": "name match, coach-approved"
+  },
+  "broad-jump": {
+   "wger_id": 2072,
+   "wger_name": "Broad Jump",
+   "how": "custom exercise in local wger (rag-motion text)"
+  },
+  "bulgarian-split-squat": {
+   "wger_id": 1706,
+   "wger_name": "Bulgarian Squat with Dumbbells",
+   "how": "coach-corrected"
+  },
+  "cable-triceps-pushdown": {
+   "wger_id": 1185,
+   "wger_name": "Triceps Pushdown",
+   "how": "name match, coach-approved"
+  },
+  "calf-raise": {
+   "wger_id": 1243,
+   "wger_name": "Double Leg Calf Raise",
+   "how": "coach-corrected"
+  },
+  "chest-supported-dumbbell-row": {
+   "wger_id": 1283,
+   "wger_name": "Incline Chest-Supported Dumbbell Row",
+   "how": "name match, coach-approved"
+  },
+  "dead-bug": {
+   "wger_id": 178,
+   "wger_name": "Deadbug",
+   "how": "name match, coach-approved"
+  },
+  "depth-jump": {
+   "wger_id": 2073,
+   "wger_name": "Depth Jump",
+   "how": "custom exercise in local wger (rag-motion text)"
+  },
+  "dumbbell-bench-press": {
+   "wger_id": 1461,
+   "wger_name": "No Leg Drive Dumbbell Chest Press",
+   "how": "coach-accepted close match"
+  },
+  "dumbbell-biceps-curl": {
+   "wger_id": 92,
+   "wger_name": "Biceps Curls With Dumbbell",
+   "how": "coach-corrected"
+  },
+  "dumbbell-hip-thrust": {
+   "wger_id": 1642,
+   "wger_name": "Dumbbell Hip Thrust",
+   "how": "name match, coach-approved"
+  },
+  "dumbbell-lateral-raise": {
+   "wger_id": 2045,
+   "wger_name": "Dumbbell Lateral Raise",
+   "how": "name match, coach-approved"
+  },
+  "dumbbell-overhead-press": {
+   "wger_id": 567,
+   "wger_name": "Shoulder Press, Dumbbells",
+   "how": "coach-corrected"
+  },
+  "dumbbell-overhead-triceps-extension": {
+   "wger_id": 1519,
+   "wger_name": "Overhead Triceps Extension",
+   "how": "coach-accepted close match"
+  },
+  "dumbbell-reverse-lunge": {
+   "wger_id": 1651,
+   "wger_name": "Dumbbell Rear Lunge",
+   "how": "name match, coach-approved"
+  },
+  "dumbbell-romanian-deadlift": {
+   "wger_id": 1652,
+   "wger_name": "Dumbbell Romanian Deadlift",
+   "how": "name match, coach-approved"
+  },
+  "dumbbell-step-up": {
+   "wger_id": 722,
+   "wger_name": "Weighted Step-ups",
+   "how": "coach-corrected"
+  },
+  "farmer-carry": {
+   "wger_id": 1116,
+   "wger_name": "Dumbbell farmer's carry",
+   "how": "name match, coach-approved"
+  },
+  "front-plank": {
+   "wger_id": 1307,
+   "wger_name": "Front Plank",
+   "how": "name match, coach-approved"
+  },
+  "glute-bridge": {
+   "wger_id": 265,
+   "wger_name": "Glute Bridge",
+   "how": "name match, coach-approved"
+  },
+  "goblet-squat": {
+   "wger_id": 203,
+   "wger_name": "Dumbbell Goblet Squat",
+   "how": "coach-corrected"
+  },
+  "hammer-curl": {
+   "wger_id": 272,
+   "wger_name": "Hammer Curls",
+   "how": "name match, coach-approved"
+  },
+  "incline-dumbbell-press": {
+   "wger_id": 537,
+   "wger_name": "Incline Bench Press - Dumbbell",
+   "how": "name match, coach-approved"
+  },
+  "inverted-row": {
+   "wger_id": 1198,
+   "wger_name": "Inverted Rows",
+   "how": "name match, coach-approved"
+  },
+  "kettlebell-deadlift": {
+   "wger_id": 1003,
+   "wger_name": "Kettlebell deadlifts",
+   "how": "name match, coach-approved"
+  },
+  "kettlebell-swing": {
+   "wger_id": 331,
+   "wger_name": "Kettlebell Swings",
+   "how": "name match, coach-approved"
+  },
+  "lat-pulldown": {
+   "wger_id": 723,
+   "wger_name": "Wide-grip Pulldown",
+   "how": "coach-corrected"
+  },
+  "lateral-bound": {
+   "wger_id": 2074,
+   "wger_name": "Lateral Bound",
+   "how": "custom exercise in local wger (rag-motion text)"
+  },
+  "leg-curl": {
+   "wger_id": 364,
+   "wger_name": "Leg Curl",
+   "how": "name match, coach-approved"
+  },
+  "leg-extension": {
+   "wger_id": 369,
+   "wger_name": "Leg Extension",
+   "how": "name match, coach-approved"
+  },
+  "leg-press": {
+   "wger_id": 371,
+   "wger_name": "Leg Press",
+   "how": "name match, coach-approved"
+  },
+  "machine-chest-press": {
+   "wger_id": 2014,
+   "wger_name": "Machine Chest Press",
+   "how": "coach-corrected"
+  },
+  "nordic-hamstring-curl": {
+   "wger_id": 910,
+   "wger_name": "Nordic Curl",
+   "how": "coach-corrected"
+  },
+  "one-arm-dumbbell-row": {
+   "wger_id": 2029,
+   "wger_name": "One-Arm Dumbbell Row",
+   "how": "coach-corrected"
+  },
+  "pallof-press": {
+   "wger_id": 1194,
+   "wger_name": "Pallof Press",
+   "how": "name match, coach-approved"
+  },
+  "pistol-squat": {
+   "wger_id": 456,
+   "wger_name": "Pistol Squat",
+   "how": "name match, coach-approved"
+  },
+  "power-clean": {
+   "wger_id": 683,
+   "wger_name": "Power Clean",
+   "how": "name match, coach-approved"
+  },
+  "pull-up": {
+   "wger_id": 475,
+   "wger_name": "Pull-ups",
+   "how": "name match, coach-approved"
+  },
+  "push-up": {
+   "wger_id": 1551,
+   "wger_name": "Push-Up",
+   "how": "name match, coach-approved"
+  },
+  "seated-cable-row": {
+   "wger_id": 1117,
+   "wger_name": "Seated Cable Row",
+   "how": "name match, coach-approved"
+  },
+  "side-plank": {
+   "wger_id": 580,
+   "wger_name": "Side Plank",
+   "how": "name match, coach-approved"
+  },
+  "single-leg-hop": {
+   "wger_id": 2075,
+   "wger_name": "Single-Leg Hop",
+   "how": "custom exercise in local wger (rag-motion text)"
+  },
+  "single-leg-romanian-deadlift": {
+   "wger_id": 1388,
+   "wger_name": "Single Leg RDL",
+   "how": "name match, coach-approved"
+  },
+  "split-squat": {
+   "wger_id": 991,
+   "wger_name": "Split squats left",
+   "how": "coach-accepted close match"
+  },
+  "suitcase-carry": {
+   "wger_id": 1776,
+   "wger_name": "Suitcase Carry",
+   "how": "name match, coach-approved"
+  },
+  "turkish-get-up": {
+   "wger_id": 675,
+   "wger_name": "Turkish Get-Up",
+   "how": "name match, coach-approved"
+  }
+ }
+}

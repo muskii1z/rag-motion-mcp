@@ -1,0 +1,1612 @@
+[
+ {
+  "slug": "a-skip",
+  "name": "A-Skip",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 1408,
+  "wger_name": "Wall-sit",
+  "wger_equipment": [],
+  "score": 0.621,
+  "confidence": "low",
+  "alternatives": [
+   {
+    "id": 1852,
+    "name": "L-sit",
+    "score": 0.595
+   },
+   {
+    "id": 279,
+    "name": "Hand Grip",
+    "score": 0.583
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "band-assisted-pull-up",
+  "name": "Band-Assisted Pull-Up",
+  "equipment": [
+   "pullup-bar",
+   "band"
+  ],
+  "wger_id": 1929,
+  "wger_name": "Assisted Pull-Up",
+  "wger_equipment": [
+   "resistance band"
+  ],
+  "score": 0.915,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1380,
+    "name": "Band pull-aparts",
+    "score": 0.661
+   },
+   {
+    "id": 1741,
+    "name": "L-Sit Pull-ups",
+    "score": 0.656
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "band-biceps-curl",
+  "name": "Band Biceps Curl",
+  "equipment": [
+   "band"
+  ],
+  "wger_id": 621,
+  "wger_name": "Standing Bicep Curl",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.774,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 910,
+    "name": "Nordic Curl",
+    "score": 0.692
+   },
+   {
+    "id": 1608,
+    "name": "Bodyweight Biceps Curl",
+    "score": 0.672
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "band-lateral-walk",
+  "name": "Band Lateral Walk",
+  "equipment": [
+   "band"
+  ],
+  "wger_id": 1514,
+  "wger_name": "Lateral Walk",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.778,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 2052,
+    "name": "Banded Monster Walk",
+    "score": 0.772
+   },
+   {
+    "id": 1842,
+    "name": "Banded Clamshell",
+    "score": 0.656
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "band-pull-apart",
+  "name": "Band Pull-Apart",
+  "equipment": [
+   "band"
+  ],
+  "wger_id": 1380,
+  "wger_name": "Band pull-aparts",
+  "wger_equipment": [
+   "resistance band"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1929,
+    "name": "Assisted Pull-Up",
+    "score": 0.631
+   },
+   {
+    "id": 1826,
+    "name": "Band pull-apart with external rotation",
+    "score": 0.616
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "barbell-back-squat",
+  "name": "Barbell Back Squat",
+  "equipment": [
+   "barbell",
+   "rack"
+  ],
+  "wger_id": 43,
+  "wger_name": "Barbell Hack Squats",
+  "wger_equipment": [
+   "barbell"
+  ],
+  "score": 0.994,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1801,
+    "name": "Barbell Full Squat",
+    "score": 0.828
+   },
+   {
+    "id": 1925,
+    "name": "Barbell Silverback Shrug",
+    "score": 0.764
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "barbell-bench-press",
+  "name": "Barbell Bench Press",
+  "equipment": [
+   "barbell",
+   "bench",
+   "rack"
+  ],
+  "wger_id": 73,
+  "wger_name": "Bench Press",
+  "wger_equipment": [
+   "barbell",
+   "bench"
+  ],
+  "score": 0.814,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1901,
+    "name": "Clean and Press",
+    "score": 0.8
+   },
+   {
+    "id": 1094,
+    "name": "Seated Bench Press",
+    "score": 0.793
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "barbell-bent-over-row",
+  "name": "Barbell Bent-Over Row",
+  "equipment": [
+   "barbell"
+  ],
+  "wger_id": 83,
+  "wger_name": "Bent Over Rowing",
+  "wger_equipment": [
+   "barbell"
+  ],
+  "score": 0.753,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1698,
+    "name": "Barbell Row (Overhand)",
+    "score": 0.684
+   },
+   {
+    "id": 1830,
+    "name": "Barbell Step Back Lunge",
+    "score": 0.669
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "barbell-deadlift",
+  "name": "Barbell Deadlift",
+  "equipment": [
+   "barbell"
+  ],
+  "wger_id": 1370,
+  "wger_name": "Dumbbell Deadlift",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.798,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1700,
+    "name": "Barbell Romanian Deadlift (RDL)",
+    "score": 0.761
+   },
+   {
+    "id": 184,
+    "name": "Deadlifts",
+    "score": 0.717
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "bench-dip",
+  "name": "Bench Dip",
+  "equipment": [
+   "bench"
+  ],
+  "wger_id": 73,
+  "wger_name": "Bench Press",
+  "wger_equipment": [
+   "barbell",
+   "bench"
+  ],
+  "score": 0.787,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1774,
+    "name": "Chair dips",
+    "score": 0.617
+   },
+   {
+    "id": 501,
+    "name": "Ring Dips",
+    "score": 0.588
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "bird-dog",
+  "name": "Bird Dog",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 1572,
+  "wger_name": "Bird Dog",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1198,
+    "name": "Inverted Rows",
+    "score": 0.55
+   },
+   {
+    "id": 1399,
+    "name": "Roll Down",
+    "score": 0.521
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "bodyweight-squat",
+  "name": "Bodyweight Squat",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 1312,
+  "wger_name": "Bodyweight Squat HD",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.964,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1935,
+    "name": "Belt Squat",
+    "score": 0.742
+   },
+   {
+    "id": 1324,
+    "name": "Bodyweight lunge HD",
+    "score": 0.736
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "bounding",
+  "name": "Bounding",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 1994,
+  "wger_name": "Boxing",
+  "wger_equipment": [],
+  "score": 0.764,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 908,
+    "name": "Zone 2 Running",
+    "score": 0.65
+   },
+   {
+    "id": 319,
+    "name": "Jogging",
+    "score": 0.583
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "box-jump",
+  "name": "Box Jump",
+  "equipment": [
+   "box"
+  ],
+  "wger_id": 1373,
+  "wger_name": "box jumps",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 1.0,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 112,
+    "name": "Body-Ups",
+    "score": 0.667
+   },
+   {
+    "id": 977,
+    "name": "Box squat",
+    "score": 0.588
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "box-squat",
+  "name": "Box Squat",
+  "equipment": [
+   "box"
+  ],
+  "wger_id": 977,
+  "wger_name": "Box squat",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 1.0,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1941,
+    "name": "1 Leg Box Squat",
+    "score": 0.818
+   },
+   {
+    "id": 632,
+    "name": "Sumo Squats",
+    "score": 0.737
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "broad-jump",
+  "name": "Broad Jump",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 1373,
+  "wger_name": "box jumps",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.828,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 112,
+    "name": "Body-Ups",
+    "score": 0.756
+   },
+   {
+    "id": 614,
+    "name": "Squat Jumps",
+    "score": 0.65
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "bulgarian-split-squat",
+  "name": "Bulgarian Split Squat",
+  "equipment": [
+   "dumbbell",
+   "bench"
+  ],
+  "wger_id": 988,
+  "wger_name": "Bulgarian split squats left",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.844,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 989,
+    "name": "Bulgarian split squats right",
+    "score": 0.825
+   },
+   {
+    "id": 1366,
+    "name": "Dumbbell Split Squat",
+    "score": 0.733
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "cable-triceps-pushdown",
+  "name": "Cable Triceps Pushdown",
+  "equipment": [
+   "cable"
+  ],
+  "wger_id": 1185,
+  "wger_name": "Triceps Pushdown",
+  "wger_equipment": [
+   "cable machine"
+  ],
+  "score": 0.833,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1661,
+    "name": "Cable Triceps Press",
+    "score": 0.789
+   },
+   {
+    "id": 1485,
+    "name": "Rocking Triceps Pushdown",
+    "score": 0.773
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "calf-raise",
+  "name": "Calf Raise",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 376,
+  "wger_name": "Leg Raise",
+  "wger_equipment": [],
+  "score": 0.787,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 590,
+    "name": "Sitting Calf Raises",
+    "score": 0.764
+   },
+   {
+    "id": 1474,
+    "name": "W-Raise",
+    "score": 0.756
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "chest-supported-dumbbell-row",
+  "name": "Chest-Supported Dumbbell Row",
+  "equipment": [
+   "dumbbell",
+   "bench"
+  ],
+  "wger_id": 1283,
+  "wger_name": "Incline Chest-Supported Dumbbell Row",
+  "wger_equipment": [
+   "bench",
+   "dumbbell"
+  ],
+  "score": 0.975,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1825,
+    "name": "Chest-Supported Rear Delt Raise",
+    "score": 0.812
+   },
+   {
+    "id": 81,
+    "name": "Bent Over Dumbbell Rows (Single Arm)",
+    "score": 0.767
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dead-bug",
+  "name": "Dead Bug",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 178,
+  "wger_name": "Deadbug",
+  "wger_equipment": [],
+  "score": 0.983,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 182,
+    "name": "Deadhang",
+    "score": 0.675
+   },
+   {
+    "id": 1007,
+    "name": "Head turns",
+    "score": 0.638
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "depth-jump",
+  "name": "Depth Jump",
+  "equipment": [
+   "box"
+  ],
+  "wger_id": 1952,
+  "wger_name": "Wide Push-Up",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.636,
+  "confidence": "low",
+  "alternatives": [
+   {
+    "id": 614,
+    "name": "Squat Jumps",
+    "score": 0.6
+   },
+   {
+    "id": 981,
+    "name": "Step-ups",
+    "score": 0.588
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-bench-press",
+  "name": "Dumbbell Bench Press",
+  "equipment": [
+   "dumbbell",
+   "bench"
+  ],
+  "wger_id": 1497,
+  "wger_name": "DB Underhand bench press",
+  "wger_equipment": [
+   "bench",
+   "dumbbell"
+  ],
+  "score": 0.892,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1353,
+    "name": "Dumbbell Hex Press",
+    "score": 0.883
+   },
+   {
+    "id": 1824,
+    "name": "Dumbell Tate Press",
+    "score": 0.878
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-biceps-curl",
+  "name": "Dumbbell Biceps Curl",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 1225,
+  "wger_name": "Dumbbell wide bicep curls",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.934,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 204,
+    "name": "Dumbbell Incline Curl",
+    "score": 0.9
+   },
+   {
+    "id": 1482,
+    "name": "Dumbbell Cheat Curl",
+    "score": 0.892
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-hip-thrust",
+  "name": "Dumbbell Hip Thrust",
+  "equipment": [
+   "dumbbell",
+   "bench"
+  ],
+  "wger_id": 1642,
+  "wger_name": "Dumbbell Hip Thrust",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1684,
+    "name": "Dumbbell Thruster",
+    "score": 0.883
+   },
+   {
+    "id": 1234,
+    "name": "Dumbbell Single-leg Hip Thrust",
+    "score": 0.826
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-lateral-raise",
+  "name": "Dumbbell Lateral Raise",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 2045,
+  "wger_name": "Dumbbell Lateral Raise",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 2048,
+    "name": "Dumbbell Calf Raise",
+    "score": 0.879
+   },
+   {
+    "id": 256,
+    "name": "Front Raises",
+    "score": 0.812
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-overhead-press",
+  "name": "Dumbbell Overhead Press",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 1353,
+  "wger_name": "Dumbbell Hex Press",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.871,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1084,
+    "name": "Dumbbell Floor Press",
+    "score": 0.83
+   },
+   {
+    "id": 1504,
+    "name": "Dumbbell Bradford press",
+    "score": 0.823
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-overhead-triceps-extension",
+  "name": "Dumbbell Overhead Triceps Extension",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 211,
+  "wger_name": "Dumbbell Triceps Extension",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.897,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1519,
+    "name": "Overhead Triceps Extension",
+    "score": 0.797
+   },
+   {
+    "id": 2047,
+    "name": "Bent-Over Dumbbell Triceps Extension",
+    "score": 0.775
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-reverse-lunge",
+  "name": "Dumbbell Reverse Lunge",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 1651,
+  "wger_name": "Dumbbell Rear Lunge",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.928,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1830,
+    "name": "Barbell Step Back Lunge",
+    "score": 0.834
+   },
+   {
+    "id": 2030,
+    "name": "Dumbbell Bent-Over Reverse Fly",
+    "score": 0.742
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-romanian-deadlift",
+  "name": "Dumbbell Romanian Deadlift",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 1652,
+  "wger_name": "Dumbbell Romanian Deadlift",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1088,
+    "name": "Dumbbell sumo deadlift",
+    "score": 0.842
+   },
+   {
+    "id": 1370,
+    "name": "Dumbbell Deadlift",
+    "score": 0.841
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "dumbbell-step-up",
+  "name": "Dumbbell Step-Up",
+  "equipment": [
+   "dumbbell",
+   "box"
+  ],
+  "wger_id": 801,
+  "wger_name": "Dumbbell Push-Up",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.863,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1684,
+    "name": "Dumbbell Thruster",
+    "score": 0.777
+   },
+   {
+    "id": 1366,
+    "name": "Dumbbell Split Squat",
+    "score": 0.772
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "farmer-carry",
+  "name": "Farmer Carry",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 1116,
+  "wger_name": "Dumbbell farmer's carry",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.736,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1776,
+    "name": "Suitcase Carry",
+    "score": 0.665
+   },
+   {
+    "id": 272,
+    "name": "Hammer Curls",
+    "score": 0.659
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "front-plank",
+  "name": "Front Plank",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 1307,
+  "wger_name": "Front Plank",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1911,
+    "name": "Cat Plank",
+    "score": 0.75
+   },
+   {
+    "id": 1245,
+    "name": "Front Lever",
+    "score": 0.686
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "glute-bridge",
+  "name": "Glute Bridge",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 265,
+  "wger_name": "Glute Bridge",
+  "wger_equipment": [],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1528,
+    "name": "Glute Drive",
+    "score": 0.833
+   },
+   {
+    "id": 1740,
+    "name": "Single Leg Glute Bridge",
+    "score": 0.736
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "goblet-squat",
+  "name": "Goblet Squat",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 1935,
+  "wger_name": "Belt Squat",
+  "wger_equipment": [],
+  "score": 0.818,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 203,
+    "name": "Dumbbell Goblet Squat",
+    "score": 0.777
+   },
+   {
+    "id": 124,
+    "name": "Braced Squat",
+    "score": 0.667
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "hammer-curl",
+  "name": "Hammer Curl",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 272,
+  "wger_name": "Hammer Curls",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1260,
+    "name": "TRX hammer curl",
+    "score": 0.846
+   },
+   {
+    "id": 495,
+    "name": "Reverse Curl",
+    "score": 0.659
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "incline-dumbbell-press",
+  "name": "Incline Dumbbell Press",
+  "equipment": [
+   "dumbbell",
+   "bench"
+  ],
+  "wger_id": 537,
+  "wger_name": "Incline Bench Press - Dumbbell",
+  "wger_equipment": [
+   "dumbbell",
+   "incline bench"
+  ],
+  "score": 1.1,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 310,
+    "name": "Incline Dumbbell Row",
+    "score": 0.978
+   },
+   {
+    "id": 308,
+    "name": "Incline Dumbbell Fly",
+    "score": 0.929
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "inverted-row",
+  "name": "Inverted Row",
+  "equipment": [
+   "barbell",
+   "rack"
+  ],
+  "wger_id": 1198,
+  "wger_name": "Inverted Rows",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.95,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 83,
+    "name": "Bent Over Rowing",
+    "score": 0.621
+   },
+   {
+    "id": 687,
+    "name": "Overhead Press",
+    "score": 0.61
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "kettlebell-deadlift",
+  "name": "Kettlebell Deadlift",
+  "equipment": [
+   "kettlebell"
+  ],
+  "wger_id": 1003,
+  "wger_name": "Kettlebell deadlifts",
+  "wger_equipment": [
+   "kettlebell"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1612,
+    "name": "kettlebell sumo deadlift",
+    "score": 0.934
+   },
+   {
+    "id": 1641,
+    "name": "Kettlebell One Legged Deadlift",
+    "score": 0.826
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "kettlebell-swing",
+  "name": "Kettlebell Swing",
+  "equipment": [
+   "kettlebell"
+  ],
+  "wger_id": 331,
+  "wger_name": "Kettlebell Swings",
+  "wger_equipment": [
+   "kettlebell"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 960,
+    "name": "Kettlebell Swing",
+    "score": 1.05
+   },
+   {
+    "id": 9,
+    "name": "2 Handed Kettlebell Swing",
+    "score": 0.871
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "lat-pulldown",
+  "name": "Lat Pulldown",
+  "equipment": [
+   "cable"
+  ],
+  "wger_id": 2010,
+  "wger_name": "Plate-Loaded Lat Pulldown",
+  "wger_equipment": [],
+  "score": 0.8,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 695,
+    "name": "V-Bar Pulldown",
+    "score": 0.769
+   },
+   {
+    "id": 2018,
+    "name": "Machine Lat Pulldown",
+    "score": 0.75
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "lateral-bound",
+  "name": "Lateral Bound",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 1907,
+  "wger_name": "Unilateral Lunges",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.74,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1514,
+    "name": "Lateral Walk",
+    "score": 0.69
+   },
+   {
+    "id": 1325,
+    "name": "Lateral Push Off",
+    "score": 0.671
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "leg-curl",
+  "name": "Leg Curl",
+  "equipment": [
+   "machine"
+  ],
+  "wger_id": 364,
+  "wger_name": "Leg Curl",
+  "wger_equipment": [],
+  "score": 1.0,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1531,
+    "name": "Cable Curls",
+    "score": 0.778
+   },
+   {
+    "id": 1511,
+    "name": "Kong Curl",
+    "score": 0.706
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "leg-extension",
+  "name": "Leg Extension",
+  "equipment": [
+   "machine"
+  ],
+  "wger_id": 369,
+  "wger_name": "Leg Extension",
+  "wger_equipment": [],
+  "score": 1.0,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1717,
+    "name": "Neck extension",
+    "score": 0.815
+   },
+   {
+    "id": 71,
+    "name": "Single Leg Extension",
+    "score": 0.788
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "leg-press",
+  "name": "Leg Press",
+  "equipment": [
+   "machine"
+  ],
+  "wger_id": 371,
+  "wger_name": "Leg Press",
+  "wger_equipment": [],
+  "score": 1.0,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1901,
+    "name": "Clean and Press",
+    "score": 0.778
+   },
+   {
+    "id": 1546,
+    "name": "Larsen Press",
+    "score": 0.737
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "machine-chest-press",
+  "name": "Machine Chest Press",
+  "equipment": [
+   "machine"
+  ],
+  "wger_id": 129,
+  "wger_name": "Chest Press",
+  "wger_equipment": [],
+  "score": 1.0,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 2014,
+    "name": "Machine Chest Press",
+    "score": 1.0
+   },
+   {
+    "id": 2019,
+    "name": "Machine Incline Chest Press",
+    "score": 0.818
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "nordic-hamstring-curl",
+  "name": "Nordic Hamstring Curl",
+  "equipment": [
+   "anchor"
+  ],
+  "wger_id": 1833,
+  "wger_name": "Floor Glider Hamstring Curls",
+  "wger_equipment": [],
+  "score": 0.75,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1294,
+    "name": "Single-leg hamstring curl",
+    "score": 0.696
+   },
+   {
+    "id": 910,
+    "name": "Nordic Curl",
+    "score": 0.688
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "one-arm-dumbbell-row",
+  "name": "One-Arm Dumbbell Row",
+  "equipment": [
+   "dumbbell",
+   "bench"
+  ],
+  "wger_id": 81,
+  "wger_name": "Bent Over Dumbbell Rows (Single Arm)",
+  "wger_equipment": [
+   "bench",
+   "dumbbell"
+  ],
+  "score": 1.1,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 2029,
+    "name": "One-Arm Dumbbell Row",
+    "score": 1.05
+   },
+   {
+    "id": 310,
+    "name": "Incline Dumbbell Row",
+    "score": 0.85
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "pallof-press",
+  "name": "Pallof Press",
+  "equipment": [
+   "band"
+  ],
+  "wger_id": 1194,
+  "wger_name": "Pallof Press",
+  "wger_equipment": [
+   "cable machine"
+  ],
+  "score": 0.95,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 371,
+    "name": "Leg Press",
+    "score": 0.632
+   },
+   {
+    "id": 478,
+    "name": "Push Press",
+    "score": 0.6
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "pistol-squat",
+  "name": "Pistol Squat",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 456,
+  "wger_name": "Pistol Squat",
+  "wger_equipment": [],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1020,
+    "name": "Pistol squats right",
+    "score": 0.85
+   },
+   {
+    "id": 1208,
+    "name": "Prisoner Squat",
+    "score": 0.819
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "power-clean",
+  "name": "Power Clean",
+  "equipment": [
+   "barbell"
+  ],
+  "wger_id": 683,
+  "wger_name": "Power Clean",
+  "wger_equipment": [
+   "barbell"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1438,
+    "name": "Clean",
+    "score": 0.675
+   },
+   {
+    "id": 51,
+    "name": "Barbell Wrist Curl",
+    "score": 0.572
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "pull-up",
+  "name": "Pull-Up",
+  "equipment": [
+   "pullup-bar"
+  ],
+  "wger_id": 475,
+  "wger_name": "Pull-ups",
+  "wger_equipment": [
+   "pull-up bar"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 423,
+    "name": "Muscle up",
+    "score": 0.675
+   },
+   {
+    "id": 1545,
+    "name": "Archer Pull Up",
+    "score": 0.667
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "push-up",
+  "name": "Push-Up",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 1551,
+  "wger_name": "Push-Up",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1090,
+    "name": "Vpushup",
+    "score": 0.907
+   },
+   {
+    "id": 478,
+    "name": "Push Press",
+    "score": 0.8
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "seated-cable-row",
+  "name": "Seated Cable Row",
+  "equipment": [
+   "cable"
+  ],
+  "wger_id": 1117,
+  "wger_name": "Seated Cable Row",
+  "wger_equipment": [
+   "cable machine"
+  ],
+  "score": 1.0,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 2022,
+    "name": "Seated Band Row",
+    "score": 0.774
+   },
+   {
+    "id": 1621,
+    "name": "Unilateral Cable row",
+    "score": 0.722
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "side-plank",
+  "name": "Side Plank",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 580,
+  "wger_name": "Side Plank",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1019,
+    "name": "Side plank right",
+    "score": 0.819
+   },
+   {
+    "id": 1288,
+    "name": "Dynamic side plank",
+    "score": 0.764
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "single-leg-hop",
+  "name": "Single-Leg Hop",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 2064,
+  "wger_name": "Single leg press",
+  "wger_equipment": [],
+  "score": 0.878,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 1388,
+    "name": "Single Leg RDL",
+    "score": 0.836
+   },
+   {
+    "id": 71,
+    "name": "Single Leg Extension",
+    "score": 0.756
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "single-leg-romanian-deadlift",
+  "name": "Single-Leg Romanian Deadlift",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 1388,
+  "wger_name": "Single Leg RDL",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.95,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1652,
+    "name": "Dumbbell Romanian Deadlift",
+    "score": 0.791
+   },
+   {
+    "id": 507,
+    "name": "Romanian Deadlift",
+    "score": 0.706
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "split-squat",
+  "name": "Split Squat",
+  "equipment": [
+   "bodyweight"
+  ],
+  "wger_id": 991,
+  "wger_name": "Split squats left",
+  "wger_equipment": [
+   "none (bodyweight exercise)"
+  ],
+  "score": 0.865,
+  "confidence": "check",
+  "alternatives": [
+   {
+    "id": 992,
+    "name": "Split squats right",
+    "score": 0.836
+   },
+   {
+    "id": 1935,
+    "name": "Belt Squat",
+    "score": 0.812
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "suitcase-carry",
+  "name": "Suitcase Carry",
+  "equipment": [
+   "dumbbell"
+  ],
+  "wger_id": 1776,
+  "wger_name": "Suitcase Carry",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 1.05,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 621,
+    "name": "Standing Bicep Curl",
+    "score": 0.474
+   },
+   {
+    "id": 348,
+    "name": "Lateral Raises",
+    "score": 0.467
+   }
+  ],
+  "status": "draft"
+ },
+ {
+  "slug": "turkish-get-up",
+  "name": "Turkish Get-Up",
+  "equipment": [
+   "kettlebell"
+  ],
+  "wger_id": 675,
+  "wger_name": "Turkish Get-Up",
+  "wger_equipment": [
+   "dumbbell"
+  ],
+  "score": 0.95,
+  "confidence": "high",
+  "alternatives": [
+   {
+    "id": 1551,
+    "name": "Push-Up",
+    "score": 0.521
+   },
+   {
+    "id": 285,
+    "name": "High Knee Jumps",
+    "score": 0.5
+   }
+  ],
+  "status": "draft"
+ }
+]

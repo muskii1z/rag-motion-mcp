@@ -30,8 +30,9 @@ def test_server_lists_its_tools_resources_and_prompt():
         async with Client(srv.server) as client:
             return ((await client.list_tools()).tools, (await client.list_resources()).resources, (await client.list_prompts()).prompts)
     tools, resources, prompts = asyncio.run(go())
-    assert {t.name for t in tools} == {"search_exercises", "search_sources", "ask_question", "build_program"}
-    assert all(t.annotations.read_only_hint for t in tools)  # nothing writes data yet (wger comes in M4)
+    assert {t.name for t in tools} == {"search_exercises", "search_sources", "ask_question", "build_program", "save_program_to_wger"}
+    writes = {t.name for t in tools if not t.annotations.read_only_hint}
+    assert writes == {"save_program_to_wger"}  # the only tool that changes data (M4), marked so clients ask first
     assert {str(r.uri) for r in resources} == {"ragmotion://exercises", "ragmotion://sources"}
     assert [p.name for p in prompts] == ["new_client_intake"]
 
