@@ -1,0 +1,17 @@
+[
+ {
+  "check": "vague request -> intake question",
+  "pass": true,
+  "detail": "What is Maria's main fitness goal (build muscle, get stronger, general fitness, or fat loss)? How many days per week can she train? What equipment does she have available (dumbbells, barbell and rack, bench, kettlebell, resistance bands, plyo box, pull-up bar, weight machines, cable station, or no equipment)? What is her experience level?"
+ },
+ {
+  "check": "answer -> program that passes every rag-motion check",
+  "pass": true,
+  "detail": "program, failed: []"
+ },
+ {
+  "check": "saved to wger and read back identical",
+  "pass": false,
+  "detail": "{\"status\": \"failed\", \"routine_id\": null, \"url\": null, \"days\": 0, \"exercises\": 0, \"verified\": false, \"problems\": [\"couldn't read sets/reps for push-up: '3' x 'as many as possible'\"]}"
+ }
+]

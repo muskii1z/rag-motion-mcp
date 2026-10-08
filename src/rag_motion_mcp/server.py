@@ -174,8 +174,11 @@ def build_program(conversation: list[Message]) -> ProgramResult:
     the agent fills it from the exercise library and the research, and code checks about 20 rules
     (equipment, level, weekly sets per muscle, citations, safety referrals).
 
-    conversation: the whole conversation about this client so far, oldest first. Start with one user
-    message describing the client (goal, days per week, equipment, level, age, injuries, likes/dislikes).
+    Call it as soon as the coach asks for a program or plan, even with no details yet: it works out what's
+    missing and returns the exact questions to ask (don't write your own intake questions).
+    conversation: the whole conversation about this client so far, oldest first. Start with the coach's
+    request as one user message, with whatever details they gave (goal, days per week, equipment, level,
+    age, injuries, likes/dislikes).
     If the result is needs_info, ask the coach the returned question word for word, then call again with
     the full conversation: the earlier messages, the question as an assistant message, and the answer as
     a user message.

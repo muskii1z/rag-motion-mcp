@@ -49,7 +49,8 @@ def test_numbers(text, expected):
 
 
 @pytest.mark.parametrize("text, unit", [("8-12", "reps"), ("30-60 s", "seconds"), ("30 seconds", "seconds"),
-                                        ("30-45 m", "meters"), ("2 min", "minutes"), ("10 per side", "reps")])
+                                        ("30-45 m", "meters"), ("2 min", "minutes"), ("10 per side", "reps"),
+                                        ("as many as possible", "max_reps"), ("AMRAP", "max_reps")])
 def test_reps_unit(text, unit):
     assert reps_unit(text) == unit
 
@@ -98,3 +99,11 @@ def test_verification_catches_what_wger_silently_changed(monkeypatch):
     monkeypatch.setattr(save, "exercise_map", lambda: {"goblet-squat": 203, "front-plank": 1307, "dumbbell-reverse-lunge": 1651})
     r = save_program(PROGRAM, FakeWger(ignore_reps=True))
     assert r.status == "created" and not r.verified and r.problems
+
+
+def test_amrap_is_saved_as_max_reps_instead_of_failing(monkeypatch):
+    monkeypatch.setattr(save, "exercise_map", lambda: {"push-up": 1551})
+    program = {"title": "t", "days": [{"name": "A", "exercises": [{"slug": "push-up", "sets": "3", "reps": "as many as possible", "rest": "90 s"}]}]}
+    w = FakeWger()
+    r = save_program(program, w)
+    assert r.status == "created" and w.rows["slot-entry/"][0]["repetition_unit"] == 7 and "repetitions-config/" not in w.rows

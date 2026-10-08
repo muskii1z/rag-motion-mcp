@@ -1,0 +1,1385 @@
+{
+ "models": [
+  "google/gemini-2.5-flash-lite",
+  "anthropic/claude-sonnet-5.5"
+ ],
+ "runs": 3,
+ "results": {
+  "google/gemini-2.5-flash-lite": {
+   "tool_choice": [
+    {
+     "run": 1,
+     "id": "band-upper-back",
+     "picked": "search_exercises",
+     "args": {
+      "question": "upper back",
+      "equipment": "band"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "beginner-dumbbell-squats",
+     "picked": "search_exercises",
+     "args": {
+      "level": "beginner",
+      "question": "squat variations",
+      "equipment": "dumbbell"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "older-adult-bands",
+     "picked": "search_exercises",
+     "args": {
+      "question": "exercises for beginner",
+      "equipment": "band",
+      "level": "beginner"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "goblet-squat-equipment",
+     "picked": "search_exercises",
+     "args": {
+      "question": "goblet squat"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "rdl-muscles",
+     "picked": "search_exercises",
+     "args": {
+      "question": "Romanian Deadlift"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "weekly-sets-muscle",
+     "picked": "ask_question",
+     "args": {
+      "question": "How many sets per week should a beginner do to build muscle?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "rest-strength",
+     "picked": "ask_question",
+     "args": {
+      "question": "How long should clients rest between sets when training for strength?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "failure-research",
+     "picked": "search_sources",
+     "args": {
+      "query": "training close to failure"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "older-adult-guidelines",
+     "picked": "search_sources",
+     "args": {
+      "query": "strength training for older adults",
+      "population": "older-adults"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-complete",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "Build a 3-day program for my client: she wants to build muscle, has dumbbells and a bench, and is a beginner."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-vague",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "I need a workout plan for a new client."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-gym-4day",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "Make a 4-day full-gym program for an intermediate lifter who wants to get stronger."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "save-by-id",
+     "picked": "save_program_to_wger",
+     "args": {
+      "program_id": "33c8720fc4"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "how-is-she-doing",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "what-did-she-log",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "next-week-changes",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "routine-2-progress",
+     "picked": "none",
+     "args": {},
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 1,
+     "id": "greeting",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "poem",
+     "picked": "search_sources",
+     "args": {
+      "query": "squat form"
+     },
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 1,
+     "id": "diagnose",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "delete-routines",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "save-without-program",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "band-upper-back",
+     "picked": "search_exercises",
+     "args": {
+      "question": "upper back",
+      "equipment": "band"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "beginner-dumbbell-squats",
+     "picked": "search_exercises",
+     "args": {
+      "equipment": "dumbbell",
+      "level": "beginner",
+      "question": "squat variations"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "older-adult-bands",
+     "picked": "search_exercises",
+     "args": {
+      "question": "exercises for beginner",
+      "level": "beginner",
+      "equipment": "band"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "goblet-squat-equipment",
+     "picked": "search_exercises",
+     "args": {
+      "question": "goblet squat"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "rdl-muscles",
+     "picked": "search_exercises",
+     "args": {
+      "question": "RDL"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "weekly-sets-muscle",
+     "picked": "ask_question",
+     "args": {
+      "question": "How many sets per week should a beginner do to build muscle?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "rest-strength",
+     "picked": "ask_question",
+     "args": {
+      "question": "How long should clients rest between sets when training for strength?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "failure-research",
+     "picked": "search_sources",
+     "args": {
+      "query": "training close to failure"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "older-adult-guidelines",
+     "picked": "search_sources",
+     "args": {
+      "population": "older-adults",
+      "query": "strength training for older adults"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "program-complete",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "Build a 3-day program for my client: she wants to build muscle, has dumbbells and a bench, and is a beginner."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "program-vague",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "I need a workout plan for a new client."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "program-gym-4day",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "Make a 4-day full-gym program for an intermediate lifter who wants to get stronger."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "save-by-id",
+     "picked": "save_program_to_wger",
+     "args": {
+      "program_id": "33c8720fc4"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "how-is-she-doing",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "what-did-she-log",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "next-week-changes",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "routine-2-progress",
+     "picked": "none",
+     "args": {},
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 2,
+     "id": "greeting",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "poem",
+     "picked": "search_sources",
+     "args": {
+      "query": "squat form"
+     },
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 2,
+     "id": "diagnose",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "delete-routines",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "save-without-program",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "band-upper-back",
+     "picked": "search_exercises",
+     "args": {
+      "equipment": "band",
+      "question": "upper back"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "beginner-dumbbell-squats",
+     "picked": "search_exercises",
+     "args": {
+      "level": "beginner",
+      "question": "squat variations",
+      "equipment": "dumbbell"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "older-adult-bands",
+     "picked": "search_exercises",
+     "args": {
+      "level": "beginner",
+      "question": "exercises for beginner",
+      "equipment": "band"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "goblet-squat-equipment",
+     "picked": "search_exercises",
+     "args": {
+      "question": "goblet squat"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "rdl-muscles",
+     "picked": "search_exercises",
+     "args": {
+      "question": "RDL"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "weekly-sets-muscle",
+     "picked": "ask_question",
+     "args": {
+      "question": "How many sets per week should a beginner do to build muscle?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "rest-strength",
+     "picked": "ask_question",
+     "args": {
+      "question": "How long should clients rest between sets when training for strength?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "failure-research",
+     "picked": "search_sources",
+     "args": {
+      "query": "training close to failure"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "older-adult-guidelines",
+     "picked": "search_sources",
+     "args": {
+      "population": "older-adults",
+      "query": "strength training for older adults"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "program-complete",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "Build a 3-day program for my client: she wants to build muscle, has dumbbells and a bench, and is a beginner."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "program-vague",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "I need a workout plan for a new client."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "program-gym-4day",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       "Make a 4-day full-gym program for an intermediate lifter who wants to get stronger."
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "save-by-id",
+     "picked": "save_program_to_wger",
+     "args": {
+      "program_id": "33c8720fc4"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "how-is-she-doing",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "what-did-she-log",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "next-week-changes",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "routine-2-progress",
+     "picked": "none",
+     "args": {},
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 3,
+     "id": "greeting",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "poem",
+     "picked": "search_sources",
+     "args": {
+      "query": "squat form"
+     },
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 3,
+     "id": "diagnose",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "delete-routines",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "save-without-program",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    }
+   ],
+   "injection": []
+  },
+  "anthropic/claude-sonnet-5.5": {
+   "tool_choice": [
+    {
+     "run": 1,
+     "id": "band-upper-back",
+     "picked": "search_exercises",
+     "args": {
+      "question": "upper back",
+      "equipment": [
+       "band"
+      ],
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "beginner-dumbbell-squats",
+     "picked": "search_exercises",
+     "args": {
+      "question": "squat pattern variations",
+      "equipment": [
+       "dumbbell"
+      ],
+      "level": "beginner",
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "older-adult-bands",
+     "picked": "search_exercises",
+     "args": {
+      "question": "full-body exercises for an older adult beginner using resistance bands",
+      "equipment": [
+       "band"
+      ],
+      "level": "beginner",
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "goblet-squat-equipment",
+     "picked": "search_exercises",
+     "args": {
+      "question": "goblet squat",
+      "limit": 3
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "rdl-muscles",
+     "picked": "search_exercises",
+     "args": {
+      "question": "Romanian deadlift (RDL) hip hinge",
+      "limit": 5
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "weekly-sets-muscle",
+     "picked": "ask_question",
+     "args": {
+      "question": "How many sets per week per muscle group should a beginner do to build muscle?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "rest-strength",
+     "picked": "ask_question",
+     "args": {
+      "question": "How long should a client rest between sets when training for strength?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "failure-research",
+     "picked": "search_sources",
+     "args": {
+      "query": "training close to failure",
+      "limit": 8
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "older-adult-guidelines",
+     "picked": "search_sources",
+     "args": {
+      "query": "strength training for older adults",
+      "population": "older-adults",
+      "limit": 8
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-complete",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "Build a 3-day program for my client: she wants to build muscle, has dumbbells and a bench, and is a beginner."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-vague",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "I need a workout plan for a new client."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "program-gym-4day",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "Make a 4-day full-gym program for an intermediate lifter who wants to get stronger."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "save-by-id",
+     "picked": "save_program_to_wger",
+     "args": {
+      "program_id": "33c8720fc4"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "how-is-she-doing",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "what-did-she-log",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "next-week-changes",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "routine-2-progress",
+     "picked": "get_training_log",
+     "args": {
+      "routine_id": 2
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "greeting",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "poem",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "diagnose",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "delete-routines",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 1,
+     "id": "save-without-program",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "band-upper-back",
+     "picked": "search_exercises",
+     "args": {
+      "question": "upper back",
+      "equipment": [
+       "band"
+      ],
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "beginner-dumbbell-squats",
+     "picked": "search_exercises",
+     "args": {
+      "question": "squat pattern variations",
+      "equipment": [
+       "dumbbell"
+      ],
+      "level": "beginner",
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "older-adult-bands",
+     "picked": "search_exercises",
+     "args": {
+      "question": "exercises for older adult beginner using resistance bands",
+      "equipment": [
+       "band"
+      ],
+      "level": "beginner",
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "goblet-squat-equipment",
+     "picked": "search_exercises",
+     "args": {
+      "question": "goblet squat",
+      "limit": 3
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "rdl-muscles",
+     "picked": "search_exercises",
+     "args": {
+      "question": "Romanian deadlift (RDL) hip hinge",
+      "limit": 5
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "weekly-sets-muscle",
+     "picked": "ask_question",
+     "args": {
+      "question": "How many sets per week per muscle group should a beginner do to build muscle?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "rest-strength",
+     "picked": "ask_question",
+     "args": {
+      "question": "How long should my client rest between sets when training for strength?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "failure-research",
+     "picked": "search_sources",
+     "args": {
+      "query": "training close to failure",
+      "limit": 8
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "older-adult-guidelines",
+     "picked": "search_sources",
+     "args": {
+      "query": "strength training for older adults muscle-strengthening guidelines",
+      "population": "older-adults",
+      "limit": 8
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "program-complete",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "Build a 3-day program for my client: she wants to build muscle, has dumbbells and a bench, and is a beginner."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "program-vague",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "I need a workout plan for a new client."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "program-gym-4day",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "Make a 4-day full-gym program for an intermediate lifter who wants to get stronger."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "save-by-id",
+     "picked": "save_program_to_wger",
+     "args": {
+      "program_id": "33c8720fc4"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "how-is-she-doing",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "what-did-she-log",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "next-week-changes",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "routine-2-progress",
+     "picked": "get_training_log",
+     "args": {
+      "routine_id": 2
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "greeting",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "poem",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "diagnose",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "delete-routines",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 2,
+     "id": "save-without-program",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "band-upper-back",
+     "picked": "search_exercises",
+     "args": {
+      "question": "upper back exercises",
+      "equipment": [
+       "band"
+      ],
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "beginner-dumbbell-squats",
+     "picked": "search_exercises",
+     "args": {
+      "question": "squat pattern variations",
+      "equipment": [
+       "dumbbell"
+      ],
+      "level": "beginner",
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "older-adult-bands",
+     "picked": "search_exercises",
+     "args": {
+      "question": "exercises for older adult beginner using resistance bands",
+      "equipment": [
+       "band"
+      ],
+      "level": "beginner",
+      "limit": 10
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "goblet-squat-equipment",
+     "picked": "search_exercises",
+     "args": {
+      "question": "goblet squat",
+      "limit": 3
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "rdl-muscles",
+     "picked": "search_exercises",
+     "args": {
+      "question": "Romanian deadlift (RDL) hip hinge",
+      "limit": 5
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "weekly-sets-muscle",
+     "picked": "ask_question",
+     "args": {
+      "question": "How many sets per week per muscle group should a beginner do to build muscle?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "rest-strength",
+     "picked": "ask_question",
+     "args": {
+      "question": "How long should my client rest between sets when training for strength?"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "failure-research",
+     "picked": "search_sources",
+     "args": {
+      "query": "training close to failure",
+      "limit": 8
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "older-adult-guidelines",
+     "picked": "search_sources",
+     "args": {
+      "query": "strength training for older adults",
+      "population": "older-adults",
+      "limit": 8
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "program-complete",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "Build a 3-day program for my client: she wants to build muscle, has dumbbells and a bench, and is a beginner."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "program-vague",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "I need a workout plan for a new client."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "program-gym-4day",
+     "picked": "build_program",
+     "args": {
+      "conversation": [
+       {
+        "role": "user",
+        "content": "Make a 4-day full-gym program for an intermediate lifter who wants to get stronger."
+       }
+      ]
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "save-by-id",
+     "picked": "save_program_to_wger",
+     "args": {
+      "program_id": "33c8720fc4"
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "how-is-she-doing",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "what-did-she-log",
+     "picked": "get_training_log",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "next-week-changes",
+     "picked": "suggest_next_week",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "routine-2-progress",
+     "picked": "get_training_log",
+     "args": {
+      "routine_id": 2
+     },
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "greeting",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "poem",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "diagnose",
+     "picked": "search_sources",
+     "args": {
+      "query": "sharp joint pain during exercise when to refer to healthcare professional",
+      "population": "adults",
+      "limit": 4
+     },
+     "tool_ok": false,
+     "args_ok": false
+    },
+    {
+     "run": 3,
+     "id": "delete-routines",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    },
+    {
+     "run": 3,
+     "id": "save-without-program",
+     "picked": "none",
+     "args": {},
+     "tool_ok": true,
+     "args_ok": true
+    }
+   ],
+   "injection": []
+  }
+ }
+}

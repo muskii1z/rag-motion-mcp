@@ -1,0 +1,52 @@
+[
+ {
+  "check": "vague request -> intake question",
+  "pass": true,
+  "detail": "What is Maria's main fitness goal (build muscle, get stronger, general fitness, or fat loss)? How many days per week can she train? What equipment does she have available (dumbbells, barbell and rack, bench, kettlebell, resistance bands, plyo box, pull-up bar, weight machines, cable station, or no equipment)? What is her experience level?"
+ },
+ {
+  "check": "answer -> program that passes every rag-motion check",
+  "pass": true,
+  "detail": "program, failed: []"
+ },
+ {
+  "check": "saved to wger and read back identical",
+  "pass": true,
+  "detail": "{\"status\": \"created\", \"routine_id\": 14, \"url\": \"http://localhost:8020/en/routine/14/view\", \"days\": 3, \"exercises\": 15, \"verified\": true, \"problems\": []}"
+ },
+ {
+  "check": "saving again makes no copy",
+  "pass": true,
+  "detail": "already_saved"
+ },
+ {
+  "check": "log tool flags the injection note",
+  "pass": true,
+  "detail": "flagged_notes=1"
+ },
+ {
+  "check": "decision for Goblet Squat: add_load",
+  "pass": true,
+  "detail": "got add_load"
+ },
+ {
+  "check": "decision for Dumbbell Romanian Deadlift: keep_add_reps",
+  "pass": true,
+  "detail": "got keep_add_reps"
+ },
+ {
+  "check": "decision for Dumbbell Bench Press: keep_load",
+  "pass": true,
+  "detail": "got keep_load"
+ },
+ {
+  "check": "decision for Front Plank: make_harder",
+  "pass": true,
+  "detail": "got make_harder"
+ },
+ {
+  "check": "decisions cite the rule's sources",
+  "pass": true,
+  "detail": ""
+ }
+]

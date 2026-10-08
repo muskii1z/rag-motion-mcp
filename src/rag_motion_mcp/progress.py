@@ -45,7 +45,9 @@ def decide(e: ExerciseLog) -> Decision:
     if e.planned is None or e.planned.reps_min is None or len(last_two) < 2:
         return Decision(**base, action="not_enough_data", reason=f"{len(last_two)} logged session(s); the rule needs 2 in a row.")
     p = e.planned
-    target = p.reps_max if p.reps_max is not None else p.reps_min + 2  # range: its top; single target: 2 more (coach's note)
+    # Range: its top. Single rep target: 2 more (coach's note). Single time/distance target: the target itself
+    # ("2 more" seconds or metres makes no sense; M6 end-to-end find).
+    target = p.reps_max if p.reps_max is not None else (p.reps_min + 2 if p.unit == "reps" else p.reps_min)
     last_sets = [s.sets[-1].reps or 0 for s in last_two]
     latest = last_two[-1].sets
     kg = latest[-1].weight_kg or 0

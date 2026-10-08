@@ -67,3 +67,7 @@ def test_normal_notes_are_not_flagged(note):
 
 def test_long_notes_are_cut_and_empty_notes_vanish():
     assert len(untrusted("x" * 2000).text) <= 501 and untrusted("   ") is None
+
+
+def test_single_time_target_reached_twice_makes_it_harder():
+    assert decide(ex([[30, 30, 30], [30, 30, 30]], reps_min=30, reps_max=None, unit="seconds", kg=0)).action == "make_harder"

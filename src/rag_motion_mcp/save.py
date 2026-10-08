@@ -20,7 +20,8 @@ from rag_motion_mcp.wger import WgerClient
 
 ROOT = Path(__file__).resolve().parents[2]
 MAP_FILE = ROOT / "data" / "wger_exercise_map.json"
-UNITS = {"reps": 1, "seconds": 3, "minutes": 4, "meters": 8}  # wger setting-repetitionunit ids
+UNITS = {"reps": 1, "seconds": 3, "minutes": 4, "meters": 8, "max_reps": 7}  # wger setting-repetitionunit ids
+AMRAP = re.compile(r"as many (\w+ )?as possible|\bamrap\b|\bmax(imum)?\s*reps?\b|to failure", re.IGNORECASE)
 WEEKS = 8  # routine length on the calendar (wger allows up to 120 days)
 # Which weekdays train (0 = Monday) for each number of sessions; the rest become wger rest days.
 # Spreads sessions out instead of back to back (coach review of the first live save, 2026-10-08).
@@ -51,6 +52,8 @@ def numbers(text: str) -> tuple[float | None, float | None]:
 
 def reps_unit(text: str) -> str:
     t = (text or "").lower()
+    if AMRAP.search(t):  # "as many as possible": wger's Max Reps unit, no number needed (M6 end-to-end find)
+        return "max_reps"
     if re.search(r"\d\s*(s|sec|secs|seconds?)\b", t):
         return "seconds"
     if re.search(r"\d\s*(min|mins|minutes?)\b", t):
@@ -115,7 +118,7 @@ def plan(program: dict, ex_map: dict[str, int]) -> tuple[list[tuple[str, list[Pl
             entries.append(PlannedEntry(slug=x["slug"], name=x.get("name", x["slug"]), wger_exercise=wid,
                                         sets=numbers(str(x.get("sets", ""))), reps=numbers(reps_text), unit=reps_unit(reps_text),
                                         rest=rest_seconds(str(x.get("rest", ""))), comment=short(comment, 100)))
-            if entries[-1].sets[0] is None or entries[-1].reps[0] is None:
+            if entries[-1].sets[0] is None or (entries[-1].reps[0] is None and entries[-1].unit != "max_reps"):
                 problems.append(f"couldn't read sets/reps for {x['slug']}: {x.get('sets')!r} x {x.get('reps')!r}")
         days.append((d.get("name", "Day"), entries))
     if not days:
