@@ -60,6 +60,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md): stateless server; the client carries the conversation.
 - [M2: What we saw](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): turn 1 asked for goal, days, equipment, level; turn 2 returned a 3-day program that passed all checks.
 - [M6](build-log.md#m6-evals-tool-choice-accuracy-prompt-injection-with-the-guard-on-vs-off-and-an-end-to-end-scenario): the end-to-end scenario runs both turns over MCP (vague request -> `needs_info`, answer -> a program that passes every check), 10/10 in the last 6 runs. Live in Claude Code: the 2-turn flow produced program `fe9b84cea4`. The eval also found Flash-Lite sending the conversation as plain strings, not messages (not scored; see [decision 0030](decisions/0030-tool-choice-first-call-not-executed.md)).
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme) (M6 follow-up): the plain strings came from a `$ref` in the input schema that some clients drop, so the model saw "a list of anything". Schema written out in place; the eval now requires well-formed `{role, content}` messages: 9/9 for both models. [Self-contained schemas](concepts.md#self-contained-schemas-ref-and-defs), [decision 0036](decisions/0036-self-contained-input-schemas.md).
 
 ### How does the AI decide which tool to call?
 - [Tool registration](concepts.md#tool-registration): the docstring is the description Claude reads to decide WHEN to use the tool; a vague docstring means the wrong tool.
@@ -67,6 +68,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): with 4 tools, docstrings now point between them (`search_exercises` says to use `ask_question` for sets/reps questions; `search_sources` is for the evidence itself).
 - [M5](build-log.md#m5-get_training_log-and-suggest_next_week-code-decides-ai-explains-prompt-injection-guard): `suggest_next_week`'s docstring names its trigger questions ("how is my client doing", "what should change next week").
 - [M6](build-log.md#m6-evals-tool-choice-accuracy-prompt-injection-with-the-guard-on-vs-off-and-an-end-to-end-scenario), [tool-choice eval](concepts.md#tool-choice-eval) and [docstrings as the interface for tool selection](concepts.md#docstrings-as-the-interface-for-tool-selection): 22 coach requests, 3 runs, 2 models, scored in code on the first tool call. Both models skipped `build_program` for a vague request (0/3) because its description implied details were needed first; one sentence changed it to 3/3. After the fix: Sonnet 5.5 65/66, Flash-Lite 60/66 (Flash-Lite calls `search_sources` for "write me a poem about squats"). [Decisions 0030](decisions/0030-tool-choice-first-call-not-executed.md), [0033](decisions/0033-cheap-and-strong-model.md), [0035](decisions/0035-accept-lists-for-ambiguous-cases.md).
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme): the model can only choose well from what the client shows it, and a dropped `$ref` hid an argument's shape. Final ranges across runs: Sonnet 5.5 64-65/66, Flash-Lite 54-60/66 ([run-to-run variance](concepts.md#run-to-run-variance-report-ranges)).
 
 ### How do you design a tool's inputs and outputs?
 - [Input schema and output schema](concepts.md#input-schema-and-output-schema): typed inputs (equipment list, level enum), `limit` clamped to 1-10 so Claude can't ask for 500.
@@ -79,6 +81,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Sensible defaults for tool arguments](concepts.md#sensible-defaults-for-tool-arguments) and [decision 0029](decisions/0029-default-routine-newest-with-logs.md): `routine_id` is optional; the first default returned 0 decisions, so it now picks the newest routine with logs.
 - [M5](build-log.md#m5-get_training_log-and-suggest_next_week-code-decides-ai-explains-prompt-injection-guard): `NextWeek` returns the decisions (one of 5 fixed actions, with `next_kg` and a reason in numbers), the rule in plain words, the source passages and `flagged_notes`. Notes come back as `UntrustedText` (text, flagged, reasons).
 - [M6](build-log.md#m6-evals-tool-choice-accuracy-prompt-injection-with-the-guard-on-vs-off-and-an-end-to-end-scenario): `NextWeek` gained `flagged_note_texts` (the flagged note's text, not only a count), so the AI can show the coach what it is warning about.
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme) (M6 follow-up) and [self-contained schemas ($ref and $defs)](concepts.md#self-contained-schemas-ref-and-defs): input schemas carry no `$ref`/`$defs`, because some clients drop them; a test enforces it ([decision 0036](decisions/0036-self-contained-input-schemas.md)).
 
 ## Transports
 
@@ -135,6 +138,11 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Checking the staged diff for secrets](concepts.md#checking-the-staged-diff-for-secrets): reviewed before the M3 commit.
 - [API authentication: API key vs JWT vs session vs OAuth](concepts.md#api-authentication-api-key-vs-jwt-vs-session-vs-oauth) and [decision 0015](decisions/0015-wger-personal-api-key.md): why a long-lived API key over 10-minute JWTs, and the cost.
 - [M5](build-log.md#m5-get_training_log-and-suggest_next_week-code-decides-ai-explains-prompt-injection-guard): to log in to the wger web page, the developer opened `.env` locally (`open -e`) instead of pasting the logins into chat.
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme) and [scanning the whole git history for secrets](concepts.md#scanning-the-whole-git-history-for-secrets): before going public, the full history was searched (`git log -p --all`) for a committed `.env`, OpenRouter (`sk-or-`) and LangSmith (`lsv2_`) keys, the wger key and passwords. Nothing found; the real wger key appears 0 times. Both repos are still private.
+
+### How did you make sure the repo was safe to make public?
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme): whole-history secret scan (above), no `.env` ever committed, only fictional client data ([README: Data and licenses](../README.md#data-and-licenses)). rag-motion should go public first, because this README links to it.
+- [Checking the staged diff for secrets](concepts.md#checking-the-staged-diff-for-secrets) (M3): the per-commit habit that kept the history clean.
 
 ### Whose account does the server act as?
 - [Decision 0016](decisions/0016-one-demo-client-account.md): a routine belongs to one wger user, so the server uses the fictional client `sarah_demo`'s own key, "like a coach managing a client's app with permission". One client only for now.
@@ -183,6 +191,12 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
   - an end-to-end scenario: 10/10 checks in the last 6 runs ([end-to-end scenario test](concepts.md#end-to-end-scenario-test)).
 - Lessons: read raw outputs before trusting a score (word search was too crude; Sonnet's empty replies were a [measurement bug](concepts.md#measurement-bugs-empty-replies-thinking-budget)). [Decisions 0030-0035](decisions/README.md).
 - Gaps: only 4 injection notes; Claude Desktop isn't in the automated eval; the answer key's accept-lists weren't coach-reviewed; cost of the runs not recorded.
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme) (M6 follow-up): the eval now checks argument shape for `build_program` (it had scored a plain-strings call as correct). Final ranges: Sonnet 64-65/66, Flash-Lite 54-60/66.
+
+### How do you report eval results honestly?
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme), [run-to-run variance](concepts.md#run-to-run-variance-report-ranges) and [decision 0038](decisions/0038-report-eval-results-as-ranges.md): "Report the range, not a single flattering number." Flash-Lite moved 60/66 -> 54/66 between runs at temperature 0, so the README gives ranges.
+- [Decision 0037](decisions/0037-readme-for-hiring-manager-first.md): the README has a Limits section (4 injection notes, pattern-based flags, client writes the final answer).
+- [Ablation](concepts.md#ablation-guard-on-vs-off) (M6): showing the guard made no difference for Sonnet, instead of claiming it protected both models.
 
 ## Testing
 
@@ -195,6 +209,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification) and [fakes in tests](concepts.md#fakes-in-tests-monkeypatch): `FakeWger` (in memory, can fail on one endpoint or change a stored value) tests parsing, the week layout, units, duplicates, rollback and verification offline; a server test checks `save_program_to_wger` is the only non-read-only tool. 29 tests pass. Live: routines #2 and #3 created and verified, repeats gave `already_saved`.
 - [M5](build-log.md#m5-get_training_log-and-suggest_next_week-code-decides-ai-explains-prompt-injection-guard): `tests/test_progress_and_guard.py` tests every branch of the progression rule, that the last set counts, the single-target "+2" rule, load jumps, flagged vs normal notes and note length. 49 tests pass. The set-order bug was found by reading live output, not by a test ([ordering assumptions](concepts.md#ordering-assumptions-in-api-results)).
 - [M6](build-log.md#m6-evals-tool-choice-accuracy-prompt-injection-with-the-guard-on-vs-off-and-an-end-to-end-scenario): an [end-to-end scenario test](concepts.md#end-to-end-scenario-test) over MCP with seeded logs and automatic cleanup ([decision 0034](decisions/0034-e2e-deletes-its-routine.md)) found two bugs (AMRAP sets unsaveable; a single "30 s" target treated as 32 s); both now have unit tests. 53 tests pass.
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme) (M6 follow-up): `test_input_schemas_are_self_contained` fails if any input schema contains `$ref`/`$defs`. 54 tests.
 
 ## Production
 
@@ -207,6 +222,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): stored programs (`programs/`) and their ids exist only on this laptop ([decision 0020](decisions/0020-program-id-and-server-side-store.md)); the 6 custom exercises (ids 2070-2075) exist only in this local wger ([decision 0019](decisions/0019-custom-wger-exercises-for-unmatched.md)); the routine link only works for someone logged in to wger.
 - [M5](build-log.md#m5-get_training_log-and-suggest_next_week-code-decides-ai-explains-prompt-injection-guard): `suggest_next_week` needs both wger and rag-motion's Postgres (the rule's passages come from rag-motion's database). The local wger is a dev build (2.8.0-dev) with untranslated labels on its web page. One client, one active routine assumed ([decision 0029](decisions/0029-default-routine-newest-with-logs.md)).
 - [M6](build-log.md#m6-evals-tool-choice-accuracy-prompt-injection-with-the-guard-on-vs-off-and-an-end-to-end-scenario) and [provider and parameter compatibility](concepts.md#provider-and-parameter-compatibility): OpenRouter stopped serving Sonnet 5.5 with JSON-schema output and forced tool calls, which broke the planned judge setup (and probably rag-motion's judge) with no code change on our side. The server also can't choose the client's model, and a cheap model behaved much worse under injection ([strong vs cheap model robustness](concepts.md#strong-vs-cheap-model-robustness)).
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme): the README's Limits section lists what hosting would need: HTTP transport and per-user authentication instead of stdio and one fictional account.
 - Partial.
 
 ## Architecture
@@ -219,6 +235,10 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): the server is a thin, stateless layer: typed models in and out, rag-motion does the work; the client holds the program conversation ([decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md)).
 - [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): the brain -> notebook hand-off: `build_program` (rag-motion) stores the checked program and returns an id; `save_program_to_wger` maps exercises through the coach-reviewed map, lays the week out with rest days, writes the routine to wger and reads it back.
 - [M5](build-log.md#m5-get_training_log-and-suggest_next_week-code-decides-ai-explains-prompt-injection-guard): the loop closes: wger (notebook) -> `get_training_log` -> `decide()` in code with the coach's rule -> `suggest_next_week` returns decisions plus rag-motion passages -> Claude explains and cites. Everything from wger passes through the injection guard. [Code decides, AI explains](concepts.md#code-decides-ai-explains).
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme): the [README](../README.md#how-it-fits-together) has the diagram (client -stdio-> server -> rag-motion -> Postgres + pgvector; server -REST, client's API key-> wger -> client's phone) and a table of the 7 tools, 2 resources and 1 prompt, marked read-only or changes data.
+
+### Describe the project in one minute.
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme) and [portfolio README](concepts.md#portfolio-readme): the README's opening coach conversation is the one-minute version: build a program (checked in code), save it to the tracker (with permission, verified), two weeks later get next week's changes (decided in code, cited), and a warning about a planted note. Then three numbers: tool choice 64-65/66 (Sonnet), injection obeyed 6/12 -> 0/12 with the guard (Flash-Lite), end-to-end 10/10 checks in each of the last 6 runs.
 
 ## Tradeoffs
 
@@ -240,6 +260,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 ### Why keep the program tool stateless?
 - [Decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md): matches rag-motion's `run_turn`; no session storage; risk is the client passing the conversation back wrong (to check in M6).
 - [M6](build-log.md#m6-evals-tool-choice-accuracy-prompt-injection-with-the-guard-on-vs-off-and-an-end-to-end-scenario): partly checked. The end-to-end test and Claude Code (live) passed the conversation back correctly; Flash-Lite, in the tool-choice eval, sent plain strings instead of messages (tools weren't run, so the rejection isn't confirmed).
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme) (M6 follow-up): the cause was a `$ref` in the schema, not the stateless design; fixed by writing the schema out in place ([decision 0036](decisions/0036-self-contained-input-schemas.md)).
 
 ### Why not use wger's 919 exercises instead of rag-motion's 60?
 - [Decision 0017](decisions/0017-rag-motion-exercises-source-of-truth.md) and [source of truth](concepts.md#source-of-truth-brain-vs-notebook): community-written, mixed quality, missing the fields the program checker needs, not embedded for search.
@@ -289,6 +310,12 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 ### How did you write an answer key for ambiguous requests?
 - [Decision 0035](decisions/0035-accept-lists-for-ambiguous-cases.md): accept-lists per case; Sonnet's "diagnose" -> search for referral guidance counts as a miss but is arguably better behavior.
 
+### Why inline a schema instead of letting Pydantic use references?
+- [Decision 0036](decisions/0036-self-contained-input-schemas.md): some clients drop `$ref`, so the model saw "a list of anything". Cost: a hand-written schema to keep in step with the `Message` model.
+
+### Why show limits and ranges in a portfolio README?
+- [Decision 0037](decisions/0037-readme-for-hiring-manager-first.md) and [decision 0038](decisions/0038-report-eval-results-as-ranges.md): credibility. Claims with no limits read as marketing, and a best-run number can't be reproduced. Cost: the numbers look less impressive.
+
 ### How did you balance learning pace against speed?
 - [Decision 0004](decisions/0004-hands-on-pacing-with-explanations.md) and [decision 0011](decisions/0011-faster-pacing-from-m2.md): piece-by-piece for M0-M1, then build-then-walkthrough for M2 at the developer's request, still recording every explanation.
 
@@ -300,3 +327,4 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M4: Problems and fixes](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): fuzzy matching rated wrong matches "high" (Back Squat -> Hack Squat at 0.994), so a coach reviewed every row. And the first live save put three full-body days back to back, a programming problem no test caught; the coach's eye did. See [fuzzy name matching and its limits](concepts.md#fuzzy-name-matching-and-its-limits) and [decision 0022](decisions/0022-weekly-layout-with-rest-days.md).
 - [M5: Problems and fixes](build-log.md#m5-get_training_log-and-suggest_next_week-code-decides-ai-explains-prompt-injection-guard): sets came back in reverse order because wger lists logs newest first, which would have flipped which set counted as the last one; caught by reading the output, fixed by sorting by id. And the tool's default picked a routine with no logs (0 decisions); fixed by preferring routines with logs. See [ordering assumptions in API results](concepts.md#ordering-assumptions-in-api-results) and [sensible defaults for tool arguments](concepts.md#sensible-defaults-for-tool-arguments).
 - [M6: Problems and fixes](build-log.md#m6-evals-tool-choice-accuracy-prompt-injection-with-the-guard-on-vs-off-and-an-end-to-end-scenario): Sonnet's injection score looked awful (3/12) but 21 of 24 replies were empty: its thinking used up the 700-token limit ([measurement bugs](concepts.md#measurement-bugs-empty-replies-thinking-budget)). The keyword score missed a reply that agreed to use fake numbers, so I added an LLM judge, and then the judge's structured-output mode was refused by the provider ([provider and parameter compatibility](concepts.md#provider-and-parameter-compatibility)). Both models skipped the program tool because of one sentence in its description ([docstrings as the interface for tool selection](concepts.md#docstrings-as-the-interface-for-tool-selection)). The end-to-end test caught AMRAP sets the save couldn't read and a plank target turned from 30 s into 32 s.
+- [M7](build-log.md#m7-readme-demo-plan-linkedin-post-part-1-readme) (M6 follow-up): the cheap model sent the program conversation as plain strings. The cause was in my server: a `$ref` in the input schema that this Claude Code session showed as "a list of anything". And the eval had scored those calls as correct, because it only checked the tool name. Fixed both: schema inlined with a test, eval checks the call's shape ([self-contained schemas](concepts.md#self-contained-schemas-ref-and-defs)).

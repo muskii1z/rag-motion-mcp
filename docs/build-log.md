@@ -823,7 +823,7 @@ Sonnet rows are from the rerun after the empty-reply fix (0 empty replies). Flas
 - rag-motion's own answer-eval judge (`src/ragmotion/judge.py`, structured output with Sonnet 5.5) is probably broken by the OpenRouter change. Needs checking and a fix in rag-motion.
 - Flash-Lite's misses: poem -> `search_sources` (3/3), and the new `routine-2-progress` -> no tool (3/3, after it was 3/3 correct in the first run). Why did the second one change?
 - The injection eval uses 4 notes. That's a small sample, and only one note (`subtle`) gets past the patterns.
-- Flash-Lite sent `build_program`'s conversation as plain strings. Part A doesn't execute tools or check this argument's shape. Would the call have been rejected?
+- Flash-Lite sent `build_program`'s conversation as plain strings. Part A doesn't execute tools or check this argument's shape. Would the call have been rejected? *Answered in the M7 entry (M6 follow-up): the input schema used a `$ref` some clients drop; fixed, and the eval now checks the call's shape.*
 - The cost of the M6 runs wasn't recorded (the estimate beforehand was $1-1.50).
 - The brief says 9 end-to-end runs; `evals/results/` has 11 e2e files. Not reconciled.
 - Still open from M5 (coach questions): should RIR count in the rule? Should loads round to the client's real dumbbells? Is +1 kg too big a minimum at light loads?
@@ -855,3 +855,87 @@ Sonnet rows are from the rerun after the empty-reply fix (0 empty replies). Flas
 - [0033. Evaluate a cheap and a strong model](decisions/0033-cheap-and-strong-model.md)
 - [0034. The end-to-end run deletes its routine by default](decisions/0034-e2e-deletes-its-routine.md)
 - [0035. Accept-lists for ambiguous requests](decisions/0035-accept-lists-for-ambiguous-cases.md)
+
+## M7: README, demo plan, LinkedIn post (part 1: README)
+**Date:** 2026-10-08 · **Commit:** 0756ea7 (docs: M7 README with design choices, eval results, setup and limits). The M6 follow-up below is commit b7c5d62.
+
+**Goal.** Present the project so a hiring manager understands it in a minute and anyone can run it.
+
+**What we did.**
+
+*Before M7: the M6 follow-up (commit b7c5d62).*
+- **The problem.** While writing up M6, the build scribe noticed in the result files that Flash-Lite had sent `build_program`'s `conversation` as plain strings (`["I need a workout plan for a new client."]`) instead of `{role, content}` messages (see the [M6 open questions](#m6-evals-tool-choice-accuracy-prompt-injection-with-the-guard-on-vs-off-and-an-end-to-end-scenario)).
+- **The cause.** The tool's input schema (the rules for what the AI must send, built from the type hints) described each message with `"$ref": "#/$defs/Message"`. A `$ref` is a JSON Schema pointer: "the shape of each item is defined elsewhere, under `$defs`". Some clients drop these references. This Claude Code session itself showed the tool's conversation as `"items": {}`, which means "a list of anything". So the model had no way to know each item needed a role and content.
+- **The fix.** The conversation schema is now written out in place, with no reference: `CONVERSATION_SCHEMA` in `src/rag_motion_mcp/server.py`, attached with `Annotated[list[Message], WithJsonSchema(CONVERSATION_SCHEMA)]`. Pydantic still checks the input as `Message` objects; only the schema the client sees changed ([decision 0036](decisions/0036-self-contained-input-schemas.md)).
+- **A test.** `test_input_schemas_are_self_contained` (in `tests/test_server.py`) checks that no tool's input schema contains `$ref` or `$defs`, and that each conversation item requires `role` and `content`. 54 tests now.
+- **The eval got stricter.** `evals/run_tool_choice.py` now counts a `build_program` call as correct only if the conversation is a non-empty list of `{role, content}` messages (role "user" or "assistant", content a string). The comment in the code: "the call must be usable, not just aimed at the right tool". Result: 9/9 well-formed calls for each model (3 program requests x 3 runs).
+- **Final tool-choice reruns** (22 requests x 3 runs = 66 per model):
+  - Claude Sonnet 5.5: 64/66. Both misses: `diagnose` -> `search_sources` (runs 1 and 2), searching for referral guidance, as in M6.
+  - Gemini 2.5 Flash-Lite: 54/66 (it had scored 60/66 earlier). In this run it missed the same 4 requests in all 3 runs: `beginner-dumbbell-squats` -> no tool, `older-adult-bands` -> `ask_question`, `routine-2-progress` -> no tool, `poem` -> `search_sources`. The first two are new misses.
+  - Both runs used temperature 0 (the setting meant to make a model's answers as repeatable as possible). Flash-Lite still changed from one eval run to the next.
+  - So the results are reported as ranges across all runs after the description fix: **Sonnet 64-65/66, Flash-Lite 54-60/66** ([decision 0038](decisions/0038-report-eval-results-as-ranges.md)).
+
+*M7, part 1: the README.*
+- **Written for two readers.** First a hiring manager: what it does, an example coach conversation, why it's interesting, measured results. Then a developer: how to set it up and run it ([decision 0037](decisions/0037-readme-for-hiring-manager-first.md)).
+- **Sections in `README.md`:**
+  - **Intro and an example conversation.** A coach asks Claude for a program; Claude calls `build_program`, which asks for goal, days, equipment and level; then a checked 3-day program; then "save it" (Claude asks permission, calls `save_program_to_wger`, verified). Two weeks later: `suggest_next_week` gives goblet squat 16 -> 17 kg [notes-program-design-1], row keeps its weight, and Claude warns about a planted note in the log.
+  - **How it fits together.** A Mermaid diagram (a diagram written as text, which GitHub draws): client -stdio-> server -> rag-motion -> Postgres + pgvector; server -REST API, client's API key-> wger -> the client's phone or browser. Then a table of the 7 tools, 2 resources and 1 prompt, each with its kind and whether it is read-only or changes data.
+  - **Design choices worth a look.** Code decides, the AI explains. Safe writes: the "changes data" annotation, passing an id instead of the program, content-hash idempotency, cleanup after a failed write, value-by-value verification. Tracker text treated as untrusted. The reviewed exercise map (13 corrections, 6 custom exercises). Typed, self-contained schemas (the `$ref` fix above).
+  - **Results.** The tool-choice table with ranges; the description fix that took the vague request from 0/3 to 3/3; the injection table (Sonnet followed 0/12 notes with and without the guard; Flash-Lite 0/12 with vs 6/12 without); the end-to-end run, 10/10 in each of the last 6 runs, and the two bugs it caught; 54 offline tests.
+  - **Run it.** rag-motion's database, the wger clone plus this repo's override files, `uv sync`, `.env`, the custom-exercises script, `pytest`, the Claude Desktop config (with the full path to uv), the MCP Inspector command, and the eval commands.
+  - **Limits.** Local only (stdio, one fictional account, wger on localhost). The guard is labeling plus a warning light, the flags are pattern-based, and the injection eval has 4 notes. The client writes the final answer, so the server can't enforce citations. The progression rule ignores RIR (reps in reserve) and doesn't round loads to the client's real dumbbells. Requires rag-motion. wger is a development build.
+  - **Data and licenses.** Fictional clients, original exercise text, openly licensed sources; wger (AGPL-3.0, a license that requires sharing source code of modified versions) runs unchanged as a separate service.
+  - **How it was built.** Links to the build log, concepts, decisions and interview notes.
+- **`pyproject.toml`.** The placeholder description ("Add your description here") was replaced with a real one: "MCP server connecting AI assistants to rag-motion (cited exercise RAG + program agent) and the wger workout tracker".
+- **Pre-public safety check** of the whole git history:
+  - No `.env` file was ever committed.
+  - No secret-looking strings anywhere in the history: OpenRouter keys (`sk-or-`), the wger key, passwords, LangSmith keys (`lsv2_`).
+  - The real wger API key appears 0 times in the history.
+- **Both repos are still private on GitHub** (rag-motion and rag-motion-mcp). The README links to rag-motion, so rag-motion should go public first. That's the developer's action, not done yet.
+- **The demo video, demo plan and LinkedIn post** were drafted in chat. They are not published and not recorded in the repo.
+
+**Commands.**
+```bash
+sed ... pyproject.toml          # replaced the placeholder project description
+git log -p --all | grep ...     # secret scan of every commit on every branch: nothing found; real wger key: 0 occurrences
+uv lock                         # refreshed uv.lock after the pyproject change
+git commit ... && git push      # 0756ea7, pushed to the private GitHub repo
+```
+The exact `sed` and `grep` arguments weren't recorded. `git log -p --all` prints every change in every commit on every branch, so grepping it searches the whole history, not just the current files.
+
+**What we saw.**
+- The final result files: `evals/results/tool-choice-20261008-152225.json` (Flash-Lite, 54/66) and `-152549.json` (Sonnet, 64/66). A one-run Flash-Lite file, `-152257.json`, scored 18/22 with the same 4 misses.
+- In the Flash-Lite run, each miss happened in all 3 runs. The variation is between separate eval runs (60/66 earlier, 54/66 now), not inside one.
+- The secret scan found nothing.
+
+**Problems and fixes.**
+- **A schema reference some clients drop.** `"$ref"` made the conversation look like "a list of anything" to at least one client, and the cheap model sent plain strings. Fix: write the schema out in place; a test forbids `$ref` and `$defs`; the eval now checks the call's shape.
+- **The eval was too lenient.** It scored Flash-Lite's plain-string call as correct, because it only checked the tool name. Fix: the shape check above.
+- **Scores moved between runs at temperature 0.** Not fixable on our side. Handled by reporting ranges.
+
+**How it was explained.**
+- **README order.** The README is aimed at a hiring manager first: what it does, why it's interesting, results. Setup comes second.
+- **Honest numbers.** "Report the range, not a single flattering number." The results are given as ranges across runs, not the best run.
+- **Why scan the whole history.** The pre-public check scans every commit, not just today's files, because a secret removed later is still in the old commits. Anyone who can see the repo can read them.
+
+**Learned.**
+- [Self-contained schemas ($ref and $defs)](concepts.md#self-contained-schemas-ref-and-defs) (new)
+- [Run-to-run variance (report ranges)](concepts.md#run-to-run-variance-report-ranges) (new)
+- [Portfolio README](concepts.md#portfolio-readme) (new)
+- [Scanning the whole git history for secrets](concepts.md#scanning-the-whole-git-history-for-secrets) (new)
+- [Input schema and output schema](concepts.md#input-schema-and-output-schema) (extended: what the client actually shows)
+- [Multi-turn tool with client-held state](concepts.md#multi-turn-tool-with-client-held-state) (extended: the plain-strings cause and fix)
+- [Tool-choice eval](concepts.md#tool-choice-eval) (extended: shape check, final ranges)
+- [Strong vs cheap model robustness](concepts.md#strong-vs-cheap-model-robustness) (extended: final ranges)
+
+**Decisions.**
+- [0036. Write input schemas out in place, with no $ref](decisions/0036-self-contained-input-schemas.md) (M6 follow-up)
+- [0037. README for a hiring manager first, with results and limits](decisions/0037-readme-for-hiring-manager-first.md)
+- [0038. Report eval results as ranges, not the best run](decisions/0038-report-eval-results-as-ranges.md)
+
+**Open questions.**
+- The exact patterns used in the secret scan weren't recorded. Worth writing down (or saving as a script) so the check can be repeated before rag-motion goes public.
+- Was the same scan run on rag-motion's history? rag-motion is the repo that should go public first.
+- Why did Flash-Lite's misses change between eval runs at temperature 0? Not investigated. Possible causes weren't checked.
+- Should `search_sources` be added to the `diagnose` accept-list? Sonnet's misses there look like reasonable behavior ([decision 0035](decisions/0035-accept-lists-for-ambiguous-cases.md)).
+- The demo plan, video script and LinkedIn post exist only in chat. Not in the repo yet; not published.

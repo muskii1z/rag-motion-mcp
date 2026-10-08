@@ -37,3 +37,6 @@ One record per real decision, numbered in order.
 - [0033. Evaluate a cheap and a strong model](0033-cheap-and-strong-model.md) (M6)
 - [0034. The end-to-end run deletes its routine by default](0034-e2e-deletes-its-routine.md) (M6)
 - [0035. Accept-lists for ambiguous requests](0035-accept-lists-for-ambiguous-cases.md) (M6)
+- [0036. Write input schemas out in place, with no $ref](0036-self-contained-input-schemas.md) (M6 follow-up, recorded in M7)
+- [0037. README for a hiring manager first, with results and limits](0037-readme-for-hiring-manager-first.md) (M7)
+- [0038. Report eval results as ranges, not the best run](0038-report-eval-results-as-ranges.md) (M7)

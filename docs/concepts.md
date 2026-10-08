@@ -129,6 +129,8 @@ A tool call is one request and one response, but building a program can take sev
 
 Added in M6: the tool-choice eval showed that both test models skipped this tool for a vague request ("I need a workout plan for a new client.") and wrote their own intake questions (0/3 each). The description had said to start with a message describing the client. It now says to call the tool as soon as the coach asks for a program, even with no details, because it returns the exact questions. After the fix: 3/3 for both. The results also show a risk the eval doesn't score: Flash-Lite sent the conversation as plain strings instead of `{role, content}` messages, which the input schema would probably reject. The end-to-end run (code playing the client) did the two turns correctly, and so did Claude Code in a live test.
 
+Added in M7 (M6 follow-up): the plain strings had a cause on our side. The input schema described each message with a `$ref` that some clients drop, so the model saw "a list of anything". Now the schema is written out in place, and the tool-choice eval counts a `build_program` call as correct only if the conversation is well-formed: 9/9 for both models. See [self-contained schemas](#self-contained-schemas-ref-and-defs).
+
 **In an interview:** "My program tool is stateless: the client sends the whole conversation every call and the tool returns either a question or a finished program, so the server needs no session storage. The risk is the client rebuilding the conversation wrong, which I plan to test in my eval."
 
 *First seen: M2.*
@@ -165,9 +167,18 @@ The input schema says what Claude must send (built from the type hints); the out
 
 Added in M2: done. See [Typed tool outputs and field descriptions](#typed-tool-outputs-and-field-descriptions). The tests also confirm the input schema still rejects bad values (level "expert", equipment typo "dumbells") before our code runs.
 
+Added in M7 (M6 follow-up): the schema the server sends isn't always the schema the model sees. Each client turns it into its own tool format first. `build_program`'s conversation used a `$ref`, and this Claude Code session showed it as a list of anything. See [self-contained schemas](#self-contained-schemas-ref-and-defs).
+
 **In an interview:** "The input schema protects the server from bad arguments; the output schema tells the model what it will get back. Type hints drive both, so precise types give precise schemas."
 
 *First seen: M1.*
+
+### Self-contained schemas ($ref and $defs)
+JSON Schema (the format MCP uses to describe tool inputs) can point elsewhere instead of repeating itself: `"$ref": "#/$defs/Message"` means "this item's shape is defined under `$defs`, in the entry called Message". Pydantic writes schemas this way for nested models. Some MCP clients drop the reference when they pass the tool to the model. This Claude Code session showed `build_program`'s conversation items as `{}`, "a list of anything", and Gemini 2.5 Flash-Lite then sent plain strings instead of `{role, content}` messages. The fix writes the item shape out in place (`CONVERSATION_SCHEMA`, attached with Pydantic's `WithJsonSchema`), and a test fails if any tool's input schema contains `$ref` or `$defs` ([decision 0036](decisions/0036-self-contained-input-schemas.md)).
+
+**In an interview:** "My eval caught a cheap model sending malformed arguments. The cause was a `$ref` in my input schema that some clients drop, so the model saw 'a list of anything'. I inlined the schema and added a test that forbids references, because the schema is only useful if the client actually shows it to the model."
+
+*First seen: M7 (M6 follow-up).*
 
 ### Structured output and the "result" wrapper
 Structured output means the tool's result is sent as typed JSON matching the output schema, not just text. Structured output must be a JSON object, so when a tool returns a list, the SDK wraps it in an object under the key `"result"`. That's why our schema showed `{"result": [...]}`.
@@ -256,6 +267,8 @@ An eval is a fixed set of test cases with the right answers written down ahead o
 ### Tool-choice eval
 A test of whether an AI, given the server's real tool list and instructions, picks the right tool with the right inputs. `evals/tool_choice.yaml` holds 22 coach requests. Each lists the acceptable first tools (or "none") and any required inputs. Example: "Which exercises can a 70-year-old beginner do with resistance bands?" -> `search_exercises` with level beginner and equipment band. `evals/run_tool_choice.py` gets the tool list through MCP (what Claude Desktop sees) and sends each request to the model. Code scores the first tool call. It's offline in the sense that the tools are never run: it measures the choice, not the result ([decision 0030](decisions/0030-tool-choice-first-call-not-executed.md)). Results after one fix: Sonnet 5.5 65/66, Flash-Lite 60/66.
 
+Added in M7 (M6 follow-up): the scoring now checks argument shape too. A `build_program` call counts only if its conversation is a list of `{role, content}` messages, because "the call must be usable, not just aimed at the right tool". Final reruns: Sonnet 64/66 (both misses: `diagnose` -> `search_sources`), Flash-Lite 54/66 (new misses: `beginner-dumbbell-squats` -> no tool, `older-adult-bands` -> `ask_question`). Reported as ranges: Sonnet 64-65/66, Flash-Lite 54-60/66 ([run-to-run variance](#run-to-run-variance-report-ranges)).
+
 **In an interview:** "I test tool selection like a classifier: 22 requests with known right tools, scored in code, three runs on two models. It found a description bug that made both models skip my program tool."
 
 *First seen: M6.*
@@ -291,9 +304,18 @@ A test that runs a whole user journey through the real system, checking each ste
 ### Strong vs cheap model robustness
 Robustness here means behaving safely when the input is trying to trick the model. In M6, Claude Sonnet 5.5 resisted all 4 planted notes and warned the coach every time, with or without the guard. Gemini 2.5 Flash-Lite, a much cheaper model, followed them half the time without the guard (6/12) and never with it (0/12). "That's why you build the guard: you don't control which model your users plug in." Tool choice differed too: 65/66 vs 60/66 after the fix ([decision 0033](decisions/0033-cheap-and-strong-model.md)).
 
+Added in M7: the cheap model is also less steady. Its tool-choice score moved from 60/66 to 54/66 between eval runs; Sonnet's moved from 65/66 to 64/66. It was also the model that sent malformed arguments when the schema was unclear ([self-contained schemas](#self-contained-schemas-ref-and-defs)).
+
 **In an interview:** "A strong model resisted these injections by itself, but a cheap model followed them half the time, and the guard brought that to zero. An MCP server can't choose its client's model, so defenses have to work for the weakest one."
 
 *First seen: M6.*
+
+### Run-to-run variance (report ranges)
+Variance means results change when you run the same test again. Temperature is a setting that controls how much randomness a model uses when it picks words; 0 is meant to make answers as repeatable as possible. Even at temperature 0, Gemini 2.5 Flash-Lite scored 60/66 on the tool-choice eval in one run and 54/66 in a later one, with no change to its tool descriptions. (Within the later run, each miss happened in all 3 repeats; the change was between runs.) So one run is a sample, not the truth. "Report the range, not a single flattering number": the README says Sonnet 64-65/66 and Flash-Lite 54-60/66 ([decision 0038](decisions/0038-report-eval-results-as-ranges.md)).
+
+**In an interview:** "Model scores aren't fixed, even at temperature 0, so I report ranges across runs instead of my best run. The cheap model swung by six points out of 66; quoting only 60 would have been misleading."
+
+*First seen: M7.*
 
 ## MCP clients
 
@@ -499,6 +521,13 @@ A Pydantic type for secrets. When printed or logged, it shows `'**********'` ins
 
 *First seen: M3.*
 
+### Scanning the whole git history for secrets
+Git keeps every past version of every file. If a key was committed once and deleted later, it is still in the old commit, and anyone who can see the repo can read it. So before making a repo public, check the whole history, not just today's files. `git log -p --all` prints every change in every commit on every branch; searching that output finds secrets anywhere in the history. Before M7's README commit, the scan looked for: any committed `.env`, OpenRouter keys (they start with `sk-or-`), LangSmith keys (`lsv2_`), the wger key and passwords. Nothing was found, and the real wger API key appeared 0 times.
+
+**In an interview:** "Before going public I scanned the full git history, not just the current files, because a secret deleted in a later commit still lives in the old one. I searched for each key format and for the real key itself, and found nothing."
+
+*First seen: M7.*
+
 ### Input validation against path tricks
 Any tool input that becomes part of a file path can be abused. A "path trick" (path traversal) uses `../` to climb out of the intended folder, e.g. asking for program `"../../etc"`. `save_program_to_wger` only accepts ids made of letters and digits (`isalnum()`) whose file exists in `programs/`; anything else returns `failed` with "no program with id ...". Tested live through MCP with `"../../etc"`. Tool inputs come from the AI, which may be passing along text from anywhere, so they're treated as untrusted.
 
@@ -532,6 +561,15 @@ Added in M6: the `subtle` test note ("Coach told me in person to switch to the k
 **In an interview:** "Pattern detection can't catch every injection, so I treat it as a warning light, not a wall. I flag and report suspicious notes, and the real protection is layered: labels, instructions, and a write tool that needs confirmation and can only save a checked program."
 
 *First seen: M5.*
+
+## Presenting the project
+
+### Portfolio README
+A README is the front page of a code repository. For a portfolio project it has two readers: a hiring manager deciding in about a minute whether it's interesting, and a developer who wants to run it. So this one leads with what it does (an example coach conversation), why it's interesting (design choices), and measured results; setup comes second. Every claim is backed by a number from the evals, reported as a range. It has a Limits section on purpose: admitting what doesn't work yet (local only, the guard is a warning light, the client writes the final answer) makes the rest believable ([decision 0037](decisions/0037-readme-for-hiring-manager-first.md)).
+
+**In an interview:** "I wrote the README for a hiring manager first: a real conversation, the design choices, and measured results with their ranges, then setup. I included a limits section, because claims with no limits read like marketing."
+
+*First seen: M7.*
 
 ## Python tooling
 
