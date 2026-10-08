@@ -1,7 +1,7 @@
 [project]
 name = "rag-motion-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "MCP server connecting AI assistants to rag-motion (cited exercise RAG + program agent) and the wger workout tracker"
 readme = "README.md"
 authors = [
     { name = "Musab Saraswat", email = "musab.work17@gmail.com" }
