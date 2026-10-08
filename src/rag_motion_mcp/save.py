@@ -141,12 +141,13 @@ def find_saved(w: WgerClient, pid: str) -> dict | None:
 def save_program(program: dict, w: WgerClient, today: date | None = None) -> SaveResult:
     pid = program_id(program)
     existing = find_saved(w, pid)
-    if existing:  # same program already in wger: don't make a second copy
-        return SaveResult(status="already_saved", routine_id=existing["id"], url=w.routine_url(existing["id"]), verified=True)
-
     days, problems = plan(program, exercise_map())
     if problems:
         return SaveResult(status="failed", problems=problems)
+    if existing:  # same program already in wger: don't make a second copy, but do check it's still intact
+        mismatches = verify(w, existing["id"], days)
+        return SaveResult(status="already_saved", routine_id=existing["id"], url=w.routine_url(existing["id"]), days=len(days),
+                          exercises=sum(len(e) for _, e in days), verified=not mismatches, problems=mismatches)
 
     today = today or date.today()
     start = today + timedelta(days=(7 - today.weekday()) % 7)  # next Monday (today if it is Monday)
@@ -181,21 +182,27 @@ def save_program(program: dict, w: WgerClient, today: date | None = None) -> Sav
 
 
 def verify(w: WgerClient, routine_id: int, days: list[tuple[str, list[PlannedEntry]]]) -> list[str]:
-    """Read the routine back and compare it with the plan (wger answers 201 even when it ignored a field)."""
+    """Read the routine back and compare every value with the plan (wger answers 201 even when it ignored a field)."""
     stored_days = sorted((d for d in w.list_all("day/", routine=routine_id) if not d["is_rest"]), key=lambda d: d["order"])
-    problems = []
     if len(stored_days) != len(days):
-        return [f"expected {len(days)} days, wger has {len(stored_days)}"]
+        return [f"expected {len(days)} training days, wger has {len(stored_days)}"]
+
+    def value(kind: str, entry_id: int) -> str | None:
+        rows = w.list_all(f"{kind}-config/", slot_entry=entry_id)
+        return fmt(float(rows[0]["value"])) if rows and rows[0].get("value") not in (None, "") else None
+
+    problems = []
     for (name, entries), sd in zip(days, stored_days):
-        slots = sorted(w.list_all("slot/", day=sd["id"]), key=lambda s: s["order"])
         got = []
-        for s in slots:
+        for s in sorted(w.list_all("slot/", day=sd["id"]), key=lambda s: s["order"]):
             for se in w.list_all("slot-entry/", slot=s["id"]):
-                sets = w.list_all("sets-config/", slot_entry=se["id"])
-                reps = w.list_all("repetitions-config/", slot_entry=se["id"])
-                got.append((se["exercise"], sets[0]["value"] if sets else None, reps[0]["value"] if reps else None))
-        want = [(e.wger_exercise, fmt(e.sets[0]), fmt(e.reps[0])) for e in entries]
-        norm = lambda rows: [(ex, fmt(float(s)) if s else None, fmt(float(r)) if r else None) for ex, s, r in rows]
-        if norm(got) != want:
-            problems.append(f"{name}: wger stored {norm(got)}, expected {want}")
+                got.append((se["exercise"], se.get("repetition_unit"),
+                            *(value(k, se["id"]) for k in ("sets", "max-sets", "repetitions", "max-repetitions", "rest", "max-rest"))))
+        want = [(e.wger_exercise, UNITS[e.unit], fmt(e.sets[0]), fmt(e.sets[1]), fmt(e.reps[0]), fmt(e.reps[1]),
+                 fmt(e.rest[0]), fmt(e.rest[1])) for e in entries]
+        for i, (g, x) in enumerate(zip(got, want)):
+            if g != x:
+                problems.append(f"{name}, exercise {i + 1}: wger stored {g}, expected {x}")
+        if len(got) != len(want):
+            problems.append(f"{name}: wger has {len(got)} exercises, expected {len(want)}")
     return problems

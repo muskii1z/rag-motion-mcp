@@ -20,6 +20,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M1](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): first tool `search_exercises`, wrapping rag-motion's exercise search with equipment and level filters.
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): 4 read-only tools (`search_exercises`, `search_sources`, `ask_question` for cited answers, `build_program` for checked, multi-turn programs), 2 resources (exercise catalog, sources list), 1 prompt (`new_client_intake`).
 - [Decision 0001](decisions/0001-coach-mcp-over-rag-motion-and-wger.md): the coach MCP.
+- [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): 5th tool `save_program_to_wger(program_id)`, the first that changes data: saves a checked program into the client's wger tracker as a routine.
 
 ### Walk me through what happens when Claude uses your tool.
 - [Initialize handshake and protocol version](concepts.md#initialize-handshake-and-protocol-version) and [protocol messages](concepts.md#protocol-messages-toolslist-toolscall-promptslist-resourcestemplateslist): initialize, tools/list, then tools/call.
@@ -69,6 +70,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Decision 0008](decisions/0008-list-dict-output-for-m1.md): vague `list[dict]` output kept for M1, typed models in M2.
 - [Typed tool outputs and field descriptions](concepts.md#typed-tool-outputs-and-field-descriptions): M2's Pydantic models make each outputSchema list every field; field descriptions say how to use them ("cite it as [slug]").
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): `search_sources` limit capped at 8; `build_program` returns a `status` field so Claude knows which other fields to read.
+- [Passing references, not big data, through an LLM](concepts.md#passing-references-not-big-data-through-an-llm) and [decision 0020](decisions/0020-program-id-and-server-side-store.md): the save tool takes a short `program_id`, not the program, so Claude never retypes it. `SavedRoutine` returns `status` (created / already_saved / failed), `verified` and `problems`.
 
 ## Transports
 
@@ -95,15 +97,20 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Docker Compose stack and services](concepts.md#docker-compose-stack-and-services), [override files and !override](concepts.md#override-files-and-override), [binding to 127.0.0.1](concepts.md#binding-to-127001-laptop-only).
 - [OpenAPI schema and wger's API rules](concepts.md#openapi-schema-and-wgers-api-rules): read the schema first; pagination, log endpoints, unknown fields silently dropped.
 - [Decision 0012](decisions/0012-official-wger-compose-with-overrides.md), [decision 0014](decisions/0014-wger-port-8020-laptop-only.md), [decision 0015](decisions/0015-wger-personal-api-key.md).
-- Partial: writing to wger is M4.
+- [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): writes a program as a routine through wger's nested records ([nested REST resources](concepts.md#nested-rest-resources-wgers-routine-model)); `wger.py` gained `post`, `delete`, `list_all` (pagination) and error messages that include wger's reason.
 
 ### How do you know a write to an external API actually worked?
 - [OpenAPI schema and wger's API rules](concepts.md#openapi-schema-and-wgers-api-rules): wger answers 200/201 even when it ignored a field, so the response body must be checked, not just the status code.
-- Partial: the write tool is M4.
+- [Read-back verification](concepts.md#read-back-verification) and [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): after saving, the tool reads the routine back and compares exercise, sets and reps day by day; a test with a fake wger that silently changes a value proves it's caught. Limit: max values, rest and units aren't compared yet.
 
 ### How do you handle the external service being down?
 - [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): `WgerUnavailable` gives a clear message with the start command (`cd ~/wger-docker && docker compose up -d`); a test checks it.
 - [MCP server](concepts.md#mcp-server): the server now depends on rag-motion's Postgres and wger, both in Docker.
+
+### How did you map data between two systems?
+- [Mapping IDs between two systems](concepts.md#mapping-ids-between-two-systems): a reviewed lookup table of 60 rag-motion exercises -> wger numbers, "like a phrasebook between two languages".
+- [Fuzzy name matching and its limits](concepts.md#fuzzy-name-matching-and-its-limits): `difflib` drafted it (36 high / 22 check / 2 low), but Back Squat -> "Barbell Hack Squats" scored 0.994.
+- [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): coach review: 13 fixes, 6 close matches accepted, 6 custom exercises created. [Decision 0018](decisions/0018-coach-reviewed-static-exercise-map.md), [decision 0019](decisions/0019-custom-wger-exercises-for-unmatched.md).
 
 ## Authentication and secrets
 
@@ -117,6 +124,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 
 ### Whose account does the server act as?
 - [Decision 0016](decisions/0016-one-demo-client-account.md): a routine belongs to one wger user, so the server uses the fictional client `sarah_demo`'s own key, "like a coach managing a client's app with permission". One client only for now.
+- [Decision 0019](decisions/0019-custom-wger-exercises-for-unmatched.md): the one-time setup script that creates custom exercises uses wger's admin shell inside Docker; the MCP server itself only ever uses the client's API key.
 
 ## Security and prompt injection
 
@@ -124,7 +132,18 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Tool-call permission (human in the loop)](concepts.md#tool-call-permission-human-in-the-loop): Claude Desktop asks Deny / Allow once / Always allow; fine to always-allow a read-only search, not a write.
 - [Tool annotations](concepts.md#tool-annotations): M2 marks all four tools read-only, not destructive, not open-world, so clients can decide how carefully to ask permission. Hints, not enforcement.
 - [Binding to 127.0.0.1](concepts.md#binding-to-127001-laptop-only) and [decision 0014](decisions/0014-wger-port-8020-laptop-only.md): the wger it writes to is reachable from this laptop only; sign-ups are off.
-- Partial: the write tool and its confirmation are planned for M4.
+- [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): `save_program_to_wger` stacks several safeguards:
+  - annotated as not read-only (Claude Desktop asks first) and idempotent; its docstring says it CHANGES data and to call it only after the coach has seen the program and asked to save ([tool annotations](concepts.md#tool-annotations), [tool-call permission](concepts.md#tool-call-permission-human-in-the-loop));
+  - saves exactly the checked program by id, not a retyped copy ([decision 0020](decisions/0020-program-id-and-server-side-store.md));
+  - refuses to write if any exercise is unmapped or sets/reps can't be read;
+  - no duplicates ([idempotent writes with a content hash](concepts.md#idempotent-writes-with-a-content-hash), [decision 0021](decisions/0021-duplicate-tag-in-routine-description.md));
+  - all or nothing ([cleanup on partial failure](concepts.md#cleanup-on-partial-failure-manual-rollback), [decision 0023](decisions/0023-manual-rollback-on-failed-write.md));
+  - reads the result back ([read-back verification](concepts.md#read-back-verification));
+  - rejects path tricks like `"../../etc"` ([input validation against path tricks](concepts.md#input-validation-against-path-tricks)).
+- Open: whether Claude Desktop's permission prompt for this tool was seen isn't recorded yet.
+
+### What happens if a write fails halfway?
+- [Cleanup on partial failure (manual rollback)](concepts.md#cleanup-on-partial-failure-manual-rollback) and [decision 0023](decisions/0023-manual-rollback-on-failed-write.md): wger has no multi-request transaction, so the tool deletes the routine it just created. "Half a routine is worse than none." A test forces a failure and checks the delete.
 
 ### How do you defend against prompt injection in tool results?
 *Not yet covered* (planned M5: text from wger treated as untrusted data).
@@ -134,6 +153,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 ### How do you evaluate an MCP server?
 - [M1](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): judged by eye so far, with coach observations (no level filter; Goblet Squat not in the top 5 for a vague query; uncited dosage in Claude's answer).
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): live checks through the in-memory client with real models: `ask_question` returned a cited answer with full coverage and no citation problems; the two-turn `build_program` passed all program checks. Still judged by eye.
+- [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): a coach-eye review of the first live save found a real problem tests hadn't: three full-body days back to back. Fixed with [decision 0022](decisions/0022-weekly-layout-with-rest-days.md).
 - Partial: tool-choice accuracy and an end-to-end scenario planned for M6.
 
 ## Testing
@@ -144,6 +164,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Fakes in tests (monkeypatch)](concepts.md#fakes-in-tests-monkeypatch): 9 offline pytest tests through the in-memory client with rag-motion faked; 9 passed in 0.98 s. They check listing and read-only annotations, filters, limits, rejected bad inputs, citations kept separate from general guidance, and `build_program`'s status mapping and conversation pass-through.
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): two layers: fast offline tests for wiring, live tests for the real pipeline. The live test caught a bug (`"where"` vs `"location"`) the fakes couldn't.
 - [Mock transport for HTTP tests](concepts.md#mock-transport-for-http-tests) and [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): 3 offline tests where httpx's `MockTransport` plays wger (auth header, hidden key, wrong key, server down). 12 tests in total. Live check: real login as `sarah_demo`, and a wrong key got 403.
+- [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification) and [fakes in tests](concepts.md#fakes-in-tests-monkeypatch): `FakeWger` (in memory, can fail on one endpoint or change a stored value) tests parsing, the week layout, units, duplicates, rollback and verification offline; a server test checks `save_program_to_wger` is the only non-read-only tool. 29 tests pass. Live: routines #2 and #3 created and verified, repeats gave `already_saved`.
 
 ## Production
 
@@ -153,6 +174,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Decision 0007](decisions/0007-full-path-to-uv-in-client-config.md): the client config uses machine-specific paths.
 - [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): wger is a 7-container stack on this laptop; Docker Desktop must be running for both wger and rag-motion's Postgres. [Decisions 0012-0016](decisions/README.md) are all local-only choices (laptop-only port, long-lived API key, one demo account, no images/videos).
 - [Docker's disk file and a full disk](concepts.md#dockers-disk-file-and-a-full-disk): resource planning matters; compressed download sizes understate the real need.
+- [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): stored programs (`programs/`) and their ids exist only on this laptop ([decision 0020](decisions/0020-program-id-and-server-side-store.md)); the 6 custom exercises (ids 2070-2075) exist only in this local wger ([decision 0019](decisions/0019-custom-wger-exercises-for-unmatched.md)); the routine link only works for someone logged in to wger.
 - Partial.
 
 ## Architecture
@@ -163,6 +185,7 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Decision 0001](decisions/0001-coach-mcp-over-rag-motion-and-wger.md), [decision 0002](decisions/0002-separate-repo-with-editable-rag-motion.md), [decision 0006](decisions/0006-stdio-transport-for-local-use.md).
 - [M3](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env) and [source of truth (brain vs notebook)](concepts.md#source-of-truth-brain-vs-notebook): "rag-motion is the brain (it picks, checks and cites exercises); wger is the notebook (the program is stored there and the client logs there)." [Decision 0017](decisions/0017-rag-motion-exercises-source-of-truth.md).
 - [M2](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): the server is a thin, stateless layer: typed models in and out, rag-motion does the work; the client holds the program conversation ([decision 0010](decisions/0010-stateless-build-program-client-carries-conversation.md)).
+- [M4](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): the brain -> notebook hand-off: `build_program` (rag-motion) stores the checked program and returns an id; `save_program_to_wger` maps exercises through the coach-reviewed map, lays the week out with rest days, writes the routine to wger and reads it back.
 
 ## Tradeoffs
 
@@ -195,6 +218,18 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [Decision 0012](decisions/0012-official-wger-compose-with-overrides.md): official, current, includes mobile-app sync; cost is disk, which caused the M3 incident.
 - [Decision 0013](decisions/0013-skip-wger-food-images-videos-sync.md): turned off food, image and video sync to fit the disk; kept the exercise list for M4's mapping.
 
+### Why a reviewed static map instead of matching names at save time?
+- [Decision 0018](decisions/0018-coach-reviewed-static-exercise-map.md): predictable and coach-controlled; cost: every new exercise needs a map entry.
+
+### Why pass an id to the save tool instead of the program?
+- [Decision 0020](decisions/0020-program-id-and-server-side-store.md): LLMs aren't reliable copiers of big data; cost: a `programs/` folder on disk and ids valid only on this machine.
+
+### How do you prevent duplicate saves?
+- [Decision 0021](decisions/0021-duplicate-tag-in-routine-description.md): a content-hash tag in the routine description, so wger stays the only record; cost: editing the description could remove the tag.
+
+### Why fixed training weekdays?
+- [Decision 0022](decisions/0022-weekly-layout-with-rest-days.md): spreads sessions with rest days (3 days -> Mon, Wed, Fri); cost: ignores the client's own schedule.
+
 ### How did you balance learning pace against speed?
 - [Decision 0004](decisions/0004-hands-on-pacing-with-explanations.md) and [decision 0011](decisions/0011-faster-pacing-from-m2.md): piece-by-piece for M0-M1, then build-then-walkthrough for M2 at the developer's request, still recording every explanation.
 
@@ -203,3 +238,4 @@ MCP (Model Context Protocol) is a standard way for AI assistants to use outside 
 - [M1: Problems and fixes](build-log.md#m1-hello-mcp-one-tool-mcp-inspector-claude-desktop): database down on the first call; Inspector v2.9 UI differing from docs; beginners getting intermediate exercises (fixed with a level filter); Claude Desktop blending uncited dosage into the answer (the best story: the client, not the server, writes the answer).
 - [M2: Problems and fixes](build-log.md#m2-rag-motion-tools-resources-a-prompt-tool-annotations-tests): the program agent stores a passage's section as `"where"`, not `"location"`; caught only by the live test, not the fakes.
 - [M3: Problems and fixes](build-log.md#m3-wger-in-docker-local-demo-client-account-api-key-in-env): the disk-full incident. Claude read compressed image sizes and underestimated the space; the disk hit 178 MB free; Docker returned HTTP 500 on every call while its dashboard said "Engine running"; wger's pages broke on a 0-byte `staticfiles.json`. Fixes: cleared caches and unused images (with approval), clean Docker restart instead of a factory reset (which would have erased rag-motion's database), verified rag-motion's data (60/60, 358/358), rebuilt the static files, turned off big downloads. See [Docker's disk file and a full disk](concepts.md#dockers-disk-file-and-a-full-disk) and [static files and collectstatic](concepts.md#static-files-and-collectstatic).
+- [M4: Problems and fixes](build-log.md#m4-save_program_to_wger-program-to-wger-routine-coach-reviewed-exercise-map-no-duplicates-verification): fuzzy matching rated wrong matches "high" (Back Squat -> Hack Squat at 0.994), so a coach reviewed every row. And the first live save put three full-body days back to back, a programming problem no test caught; the coach's eye did. See [fuzzy name matching and its limits](concepts.md#fuzzy-name-matching-and-its-limits) and [decision 0022](decisions/0022-weekly-layout-with-rest-days.md).

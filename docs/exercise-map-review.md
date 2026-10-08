@@ -1,5 +1,9 @@
 # Exercise map review (rag-motion -> wger)
 
+## Coach decisions (2026-10-08, given in chat)
+
+"fixes ok, use all 6 close ones, create the custom ones." The final map is `data/wger_exercise_map.json` (35 name matches approved, 13 corrected, 6 close matches accepted, 6 custom). The table below is the original draft.
+
 Drafted by name similarity + equipment over 919 English wger exercises. Mark each row ok, or give the right wger exercise (an alternative's id, or 'none' to use a custom exercise).
 
 | # | rag-motion | equipment | suggested wger (id) | conf. | alternatives | coach |

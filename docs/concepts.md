@@ -33,6 +33,20 @@ Added in M2: the instructions were rewritten to carry rag-motion's citation rule
 
 *First seen: M1.*
 
+### Protocol
+A protocol is a strict set of rules for how two programs talk: which messages exist and what each must contain. MCP is a protocol; for example, a server must answer a `tools/list` message with a JSON list of tools, each with a name, a description and an input schema. Any client and server that follow the rules can work together, whatever language they're written in.
+
+**In an interview:** "MCP is a protocol, not a library: it fixes the messages between an AI client and a server, so any MCP client can use any MCP server."
+
+*First seen: M0.*
+
+### SDK (Software Development Kit)
+An SDK is a ready-made box of code so you don't start from zero. The MCP Python SDK (the `mcp` package) handles the protocol for you: you write a normal Python function, put `@server.tool()` above it, and the SDK announces the tool, turns the type hints into the input schema, runs the function when Claude calls it, and sends back the result. Analogy: it's like FastAPI in rag-motion; FastAPI turned functions into web pages, the MCP SDK turns functions into tools Claude can use.
+
+**In an interview:** "I used the official MCP Python SDK so the protocol details were handled; my code is plain functions with type hints and docstrings."
+
+*First seen: M0.*
+
 ### Initialize handshake and protocol version
 The first message a client sends when it connects is `initialize`. In that exchange the client and server agree on which version of the MCP protocol they both speak. In the MCP Inspector this showed as "MCP 2025-11-25" next to "Connected".
 
@@ -112,6 +126,8 @@ A tool call is one request and one response, but building a program can take sev
 ### Tool annotations
 Hints a tool sends to the client about its behavior: read-only (doesn't change anything), destructive (may delete or overwrite), idempotent (calling twice has the same effect as once), open-world (talks to outside systems). Apps can use them to decide how carefully to ask for permission. Set with `mcp.types.ToolAnnotations`; all four M2 tools are `read_only_hint=True, destructive_hint=False, open_world_hint=False`. They are hints, not enforcement. M4's `save_program_to_wger` will be the first tool that changes data.
 
+Added in M4: `save_program_to_wger` is the first tool that changes data: `read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False`. Not destructive because it only adds a routine; idempotent because saving the same program twice doesn't create a second copy. A test checks it is the only tool that isn't read-only.
+
 **In an interview:** "I mark every tool with annotations like read-only or destructive so the client can decide how strictly to ask the user. All my current tools are read-only; the wger write tool will be the first that isn't."
 
 *First seen: M2.*
@@ -170,6 +186,8 @@ Added in M2: used two ways. Live tests with real rag-motion and real models (`as
 
 ### Fakes in tests (monkeypatch)
 A fake is a small stand-in for a real function. pytest's `monkeypatch` swaps a name in a module for the test's duration, e.g. replacing the server module's `answer_question` with a function that returns a fixed answer. This lets tests check our server's wiring (inputs passed through, filters, mapping, validation) without the database, the internet or cost. The live tests check the real thing. M2: 9 offline tests, 9 passed in 0.98 s.
+
+Added in M4: `FakeWger` in `tests/test_save.py`, a fake wger in memory that stores rows per endpoint and can be told to fail on one endpoint or to store a different value than it was sent. It lets the tests check the week layout, units, duplicates, rollback and verification offline. 29 tests in total pass.
 
 **In an interview:** "I unit-test the MCP server with rag-motion faked out, so the tests check my wiring (filters, limits, status mapping, validation) offline in under a second, and I run separate live tests for the real pipeline."
 
@@ -254,6 +272,8 @@ Static files are the fixed files a website sends unchanged: stylesheets, JavaScr
 ### OpenAPI schema and wger's API rules
 An OpenAPI schema is a machine-readable description of every endpoint (URL) of a web API: what it accepts, what it returns, how to log in. wger's is at `/api/v2/schema?format=json`. Reading it showed rules that matter for M4 and M5: list endpoints page through results with `limit`/`offset` and return `count`, `next`, `results`; routine logs are at `/api/v2/routine/{id}/logs/`; and unknown fields are silently dropped on write. That last one means wger answers 200/201 (success) even if it ignored a field, so the code must check the response body, not just the status code.
 
+Added in M4: the schema also described the routine model (routine -> day -> slot -> slot-entry -> config rows, see [nested REST resources](#nested-rest-resources-wgers-routine-model)), the repetition units (Repetitions 1, Seconds 3, Minutes 4, Meters 8) and the length limits (routine name 25, day name 20, comment 100, descriptions 1000). Because a 201 isn't proof, M4 reads the whole routine back ([read-back verification](#read-back-verification)).
+
 **In an interview:** "I read wger's OpenAPI schema before writing code. It told me the auth options, pagination, and that unknown fields are silently dropped, so my write tool in M4 has to check the saved object instead of trusting a 201."
 
 *First seen: M3.*
@@ -279,10 +299,63 @@ CC-BY-SA (Creative Commons Attribution-ShareAlike) is a license for content: fre
 
 *First seen: M3.*
 
+### Mapping IDs between two systems
+Two systems often name the same thing differently. rag-motion calls an exercise `goblet-squat`; wger calls it exercise #203 ("Dumbbell Goblet Squat"). To move data between them you need a lookup table from one system's ids to the other's, "like a phrasebook between two languages". Ours is `data/wger_exercise_map.json`: all 60 rag-motion exercises, each with its wger number and a note on how it was decided (name match approved, coach-corrected, close match accepted, or a custom exercise). A wrong row would put the wrong exercise on the client's phone, so the coach reviewed every row.
+
+**In an interview:** "Saving to wger meant translating between two catalogs. I drafted the mapping in code, but the coach approved every row and the file is static, so the same exercise always lands on the same wger entry. Unmapped exercises are reported, never guessed."
+
+*First seen: M4.*
+
+### Fuzzy name matching and its limits
+Fuzzy matching scores how alike two strings are, instead of requiring an exact match. `scripts/draft_exercise_map.py` used Python's `difflib` (0 = nothing alike, 1 = identical), after cleaning names (e.g. "DB" -> "dumbbell"), plus a small bonus or penalty for matching equipment. Over 919 wger exercises it rated 36 matches "high", 22 "check" and 2 "low". But "high" was not "right": Barbell Back Squat scored 0.994 against "Barbell Hack Squats", and Goblet Squat matched "Belt Squat". Letters can be similar while the exercises are different. The scores were good for sorting the review, not for deciding.
+
+**In an interview:** "My fuzzy matcher scored Back Squat 0.994 against Hack Squat. String similarity doesn't know exercise science, so I used it to draft and rank, and a human expert made the final call."
+
+*First seen: M4.*
+
+### Nested REST resources (wger's routine model)
+REST is a common style of web API where each kind of record has its own URL and you create records with POST, read with GET and remove with DELETE. "Nested" means records point to their parent. In wger, one program is many records: routine -> day -> slot -> slot-entry (one exercise) -> config rows (`sets-config`, `repetitions-config`, `rest-config`, `rir-config`). A range like "8-12" is two rows: 8 in `repetitions-config` and 12 in its twin `max-repetitions-config`. Units are numbers too (Repetitions 1, Seconds 3, Minutes 4, Meters 8), and text fields have limits (routine name 25 characters, day name 20, comment 100). Saving one 3-day program means dozens of separate requests.
+
+**In an interview:** "wger stores a routine as five levels of nested records, with separate rows for minimum and maximum values. Saving one program is dozens of POSTs, which is why I had to think about duplicates, partial failure and verification."
+
+*First seen: M4.*
+
+## Safe writes
+
+### Idempotent writes with a content hash
+Idempotent means doing something twice has the same effect as doing it once. A hash is a fingerprint of data: SHA-256 turns any text into a long code, and the same text always gives the same code. The save tool hashes the program (first 10 hex characters, e.g. `33c8720fc4`), writes the tag `[rag-motion program <id>]` into the routine description, and before saving looks for a routine with that tag. If it finds one, it returns `already_saved` and writes nothing. Tested live: saving the same program again gave `already_saved`. The custom-exercise script is idempotent too: a second run created nothing.
+
+**In an interview:** "My write tool is idempotent: the program's content hash is stored as a tag in the wger routine, so a retry or a double request returns 'already saved' instead of a second copy."
+
+*First seen: M4.*
+
+### Read-back verification
+After writing, read the data back and compare it with what you meant to write. It matters with wger because it answers 201 (created) even when it ignored or changed a field. `verify()` lists the routine's days, slots, entries and config rows and compares each exercise and its sets and reps with the plan; any difference goes into `problems` and `verified` becomes false. A test uses a fake wger that "accepts" a reps value but stores something else, and verification catches it. Today it compares the exercise and the lower value of sets and reps, not the max values, rest or unit.
+
+**In an interview:** "A success code only means the server accepted the request, not that it stored what I sent. My save tool reads the routine back and compares it with the program, and a test proves it catches a silently changed value."
+
+*First seen: M4.*
+
+### Cleanup on partial failure (manual rollback)
+A transaction is a group of changes that either all happen or none do; a rollback undoes them. Databases do this for you, but wger's API has no way to group dozens of requests. So the save tool rolls back by hand: if any write fails, it deletes the routine it just created and reports "wger rejected a write, nothing was kept". "Half a routine is worse than none." A test makes the fake wger fail on one endpoint and checks the routine was deleted.
+
+**In an interview:** "wger has no multi-request transaction, so if any write fails I delete the routine I just created. The client gets the whole program or nothing, never a half-built routine."
+
+*First seen: M4.*
+
+### Passing references, not big data, through an LLM
+A reference is a short id that points to data stored somewhere else. A program is big; if Claude had to copy it back into the save tool, it could change a number by mistake, "because LLMs aren't reliable copiers of big data". So `build_program` stores each program in `programs/<program_id>.json` and returns the short id, and `save_program_to_wger(program_id)` saves exactly the program that passed the checks. Like rag-motion's citations ([goblet-squat]): an id the model passes along, not text it retypes.
+
+**In an interview:** "I don't let the model retype a checked program into the write tool. The build tool stores it and returns an id, so the save tool writes exactly what was validated."
+
+*First seen: M4.*
+
 ## Security
 
 ### Tool-call permission (human in the loop)
 MCP's built-in safety step: the AI can ask to use a tool, and the person decides. Claude Desktop showed "Claude wants to use Search exercises from rag-motion" with Deny / Allow once / Always allow. Always-allow is fine for a read-only search; it matters much more for `save_program_to_wger` (planned M4), which writes data.
+
+Added in M4: the confirmation is layered. The tool's annotations mark it as changing data, so Claude Desktop asks first. Its docstring says it CHANGES data in wger and tells Claude to call it only after the coach has seen the program and asked to save or send it. And the tool is idempotent, so an accidental second call does no harm.
 
 **In an interview:** "The client asks the user before each tool call. That's fine to auto-approve for read-only tools, but for tools that write data I want the human to confirm every time."
 
@@ -301,6 +374,13 @@ A Pydantic type for secrets. When printed or logged, it shows `'**********'` ins
 **In an interview:** "Before committing anything near credentials, I review the staged diff for real values. The real .env is git-ignored and locked to my user; only a placeholder .env.example is in the repo."
 
 *First seen: M3.*
+
+### Input validation against path tricks
+Any tool input that becomes part of a file path can be abused. A "path trick" (path traversal) uses `../` to climb out of the intended folder, e.g. asking for program `"../../etc"`. `save_program_to_wger` only accepts ids made of letters and digits (`isalnum()`) whose file exists in `programs/`; anything else returns `failed` with "no program with id ...". Tested live through MCP with `"../../etc"`. Tool inputs come from the AI, which may be passing along text from anywhere, so they're treated as untrusted.
+
+**In an interview:** "Tool arguments are untrusted input. My save tool turns an id into a file path, so it only accepts alphanumeric ids that exist on disk; I tested it with a ../ path."
+
+*First seen: M4.*
 
 ## Python tooling
 

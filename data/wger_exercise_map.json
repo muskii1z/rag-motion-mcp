@@ -1,5 +1,5 @@
 {
- "_note": "rag-motion slug -> wger exercise id. Coach-reviewed 2026-10-08. wger_id null = custom exercise created by scripts/create_custom_exercises.py",
+ "_note": "rag-motion slug -> wger exercise id, coach-reviewed 2026-10-08 (35 name matches approved, 13 corrected, 6 close matches accepted, 6 custom exercises created in the local wger by scripts/create_custom_exercises.py).",
  "map": {
   "a-skip": {
    "wger_id": 1318,

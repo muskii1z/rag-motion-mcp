@@ -435,3 +435,109 @@ The exact forms of `gh api`, `curl`, `docker rmi` and `psql` were not recorded i
 - [0015. Log in to wger with a personal API key](decisions/0015-wger-personal-api-key.md)
 - [0016. One fictional client account (sarah_demo)](decisions/0016-one-demo-client-account.md)
 - [0017. rag-motion exercises stay the source of truth](decisions/0017-rag-motion-exercises-source-of-truth.md)
+
+## M4: save_program_to_wger: program to wger routine, coach-reviewed exercise map, no duplicates, verification
+**Date:** 2026-10-08 · **Commit:** 0131894 (`feat: M4 save_program_to_wger with a coach-reviewed exercise map`)
+
+**Goal.** Let Claude save a checked rag-motion program into the client's wger tracker, exactly as built, safely.
+
+**What we did.**
+- **Drafted an exercise map** (a lookup table from each rag-motion exercise to a wger exercise number). `scripts/draft_exercise_map.py` fetched all 919 English wger exercises (names plus aliases, equipment, category). For each of rag-motion's 60 exercises it scored name similarity with Python's `difflib` (a standard library that rates how alike two strings are, 0 to 1), plus a small bonus or penalty for matching equipment. Result: 36 "high", 22 "check", 2 "low". It writes `data/wger_exercise_map.draft.json` and the review sheet [`exercise-map-review.md`](exercise-map-review.md).
+- **Name matching alone was too crude.** Even "high" rows were wrong: Barbell Back Squat -> "Barbell Hack Squats"; Goblet Squat -> "Belt Squat". Claude did a first coach-style pass by searching wger's names directly, then gave the developer a short review with three groups:
+  - **13 fixes:** back squat -> Squats (615); goblet squat -> Dumbbell Goblet Squat (203); barbell deadlift -> Deadlifts (184); Nordic -> Nordic Curl (910); bent-over row -> Barbell Row (Overhand) (1698); calf raise -> Double Leg Calf Raise (1243); lat pulldown -> Wide-grip Pulldown (723); Bulgarian split squat -> Bulgarian Squat with Dumbbells (1706); DB step-up -> Weighted Step-ups (722); DB overhead press -> Shoulder Press, Dumbbells (567); DB biceps curl -> Biceps Curls With Dumbbell (92); machine chest press -> Machine Chest Press (2014); one-arm DB row -> One-Arm Dumbbell Row (2029).
+  - **6 close matches:** DB bench press -> No Leg Drive Dumbbell Chest Press (1461); bench dip -> Dips Between Two Benches (197); split squat -> Split squats left (991); band lateral walk -> Lateral Walk (1514); A-skip -> High Knee Skips HD (1318); DB overhead triceps extension -> Overhead Triceps Extension (1519).
+  - **6 with no match:** Depth Jump, Lateral Bound, Bounding, Broad Jump, Single-Leg Hop, Band Biceps Curl.
+  - Developer (as coach): "fixes ok, use all 6 close ones, create the custom ones".
+- **Final map:** `data/wger_exercise_map.json` maps all 60. Each row records how it was decided. The file has 35 "name match, coach-approved", 13 "coach-corrected", 6 "coach-accepted close match", 6 "custom exercise in local wger (rag-motion text)".
+- **Created the 6 custom exercises.** `scripts/create_custom_exercises.py` adds them to the LOCAL wger through wger's admin shell (`manage.py shell` inside the Docker container; a one-time setup step, like a database migration). They use rag-motion's own names and descriptions, a wger category (Legs 9 or Arms 8), equipment and muscles. New ids 2070-2075, written back into the map. A second run created nothing (idempotent: running it again changes nothing). In wger's web page "Broad Jump" shows as Legs, bodyweight. The MCP server itself never uses the admin shell; it only uses the client's API key.
+- **Learned wger's routine model** from its OpenAPI schema (the machine-readable list of every endpoint). A routine is a set of nested records: routine -> day -> slot -> slot-entry (one exercise) -> config rows (`sets-config`, `repetitions-config`, `rest-config`, `rir-config`), each with a `max-*` twin for ranges ("8-12" = 8 in one row, 12 in the max row). Repetition units: Repetitions 1, Seconds 3, Minutes 4, Meters 8. Length limits: routine name 25 characters, day name 20, slot-entry comment 100, descriptions 1000.
+- **Wrote `src/rag_motion_mcp/save.py`:**
+  - Reads rag-motion's text values into numbers and a unit: "2-3", "8-12 per side", "30-60 s", "30-45 m", "1-3 minutes". Rest becomes seconds.
+  - `plan()` turns a program into days of entries. It reports problems (an exercise with no map entry, sets or reps it can't read) instead of guessing. Any problem means nothing is written.
+  - `save_program()`:
+    1. **Duplicate check.** The program id is the first 10 hex characters of a SHA-256 hash of the program JSON (a fingerprint: the same program always gives the same id). The tag `[rag-motion program <id>]` is stored in the routine's description. If a routine with that tag exists, it returns `already_saved` and writes nothing.
+    2. **Writes** the routine, days, slots, entries and config rows. Names are shortened to wger's limits with "…".
+    3. **On any failed write,** deletes the routine it just created and reports that nothing was kept ("half a routine is worse than none").
+    4. **Verifies** with `verify()`: reads the routine back and compares, day by day, the exercise, sets and reps with the plan. wger answers 201 (created) even when it ignores or changes a field.
+- **Extended `wger.py`:** `_send` (one place for every request: a clear `WgerUnavailable` when wger is down, and error messages that include wger's reason, e.g. which field it rejected), `post`, `delete`, `list_all` (follows wger's pages, `limit` 999), `routine_url`, `base_url`.
+- **First live save** (a program from `run_turn`: build muscle, 3 days, dumbbells + bench, beginner): routine #1 created, 3 days, 15 exercises, verified. The same program again -> `already_saved`. Read back through `/routine/{id}/date-sequence-display/`, e.g. "Dumbbell Goblet Squat 3 Sets, 8-12 Reps 60-180s rest", "Front Plank 3 Sets, 30-60 Seconds", "Dumbbell farmer's carry 3 Sets, 30-60 Meters".
+- **Coach-eye problem in that live result:** wger scheduled the 3 full-body days back to back (Thu, Fri, Sat), then restarted on Monday. Fix: `WEEK_LAYOUT` spreads sessions across a 7-day week with rest days between (1 day: Mon; 2: Mon, Thu; 3: Mon, Wed, Fri; 4: Mon, Tue, Thu, Fri; 5: Mon, Tue, Wed, Fri, Sat; 6: Mon-Sat), and the routine starts next Monday and runs 8 weeks. Deleted test routine #1 (fictional account) and saved again: routine #2 = Mon Day 1, Tue Rest, Wed Day 2, Thu Rest, Fri Day 3, Sat/Sun Rest; verified.
+- **Server changes (`server.py`):**
+  - `build_program` now stores every finished program in `programs/<program_id>.json` (git-ignored) and returns `program_id`.
+  - New tool `save_program_to_wger(program_id)` returns `SavedRoutine`: `status` (`created` / `already_saved` / `failed`), `routine_id`, `url`, `days`, `exercises`, `verified`, `problems`.
+  - Annotations: `read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False`.
+  - Docstring: it CHANGES data in wger; only call it after the coach has seen the program and asked to save it; don't retype the program.
+  - Bad ids (e.g. `"../../etc"`) are refused: the id must be letters and digits only, and the file must exist.
+- **End-to-end through MCP:** build (2 days, one kettlebell, beginner) -> `program_id` `33c8720fc4` -> save -> routine #3 created, 2 days, 8 exercises, verified -> save again -> `already_saved` -> `"../../etc"` -> `failed` with a clear message.
+- **Tests.** `tests/test_save.py` uses `FakeWger`, an in-memory stand-in that stores rows per endpoint like wger and can be told to fail on one endpoint or to change a value. It checks: number, unit and rest parsing; an unmapped exercise is flagged; the Mon/Wed/Fri layout with rest days and a next-Monday start; name <= 25 characters; plank in seconds; "per side" in the comment; rest and max-rest values; the same program isn't saved twice; a failed write deletes the half-saved routine; verification catches a value wger silently changed. `tests/test_server.py` now checks that `save_program_to_wger` is the only tool that isn't read-only. 29 tests pass.
+
+**Commands.**
+```bash
+uv run python scripts/draft_exercise_map.py      # 60 rag-motion vs 919 wger exercises -> 36 high / 22 check / 2 low;
+                                                 # wrote the draft map and docs/exercise-map-review.md
+# wger name searches                             # targeted lookups for the coach-style pass (exact commands not recorded)
+uv run python scripts/create_custom_exercises.py # created the 6 custom exercises in local wger: ids 2070-2075
+uv run python scripts/create_custom_exercises.py # second run: {} (nothing new created)
+# live saves                                     # routine #1 (then deleted), #2, and #3 through MCP (exact commands not recorded)
+uv run pytest -q                                 # 29 passed
+```
+
+**What we saw.**
+- Name similarity scored wrong matches as "high" (0.994 for Back Squat -> Barbell Hack Squats). A number that looks confident isn't the same as a correct match.
+- wger stored ranges, units and rest correctly: "8-12 Reps 60-180s rest", "30-60 Seconds", "30-60 Meters".
+- Saving the same program twice gave `already_saved`, with one routine in wger.
+- wger lays days out in the order given. With 3 training days and no rest days it put them on three days in a row.
+- After the fix, routine #2 ran Mon / Wed / Fri with rest days between.
+- Through MCP, the path-trick id `"../../etc"` was refused.
+- From the code (not from the brief): `verify()` compares each exercise and the lower number of sets and reps (e.g. the 8 in "8-12"). It does not compare the max values, rest or the unit.
+
+**Problems and fixes.**
+- **Name matching was too crude.** Even "high" matches were wrong. Fix: Claude did a coach-style pass with targeted wger searches, and the developer reviewed 13 fixes, 6 close matches and 6 no-matches. Nothing goes into the map without coach approval.
+- **Training days back to back.** The first live save put three full-body days on Thu, Fri, Sat. Fix: a weekly layout with rest days and a Monday start ([decision 0022](decisions/0022-weekly-layout-with-rest-days.md)).
+- **wger's field length limits** (routine name 25, day name 20, comment 100, descriptions 1000). Fix: names are shortened with "…", and the duplicate tag is kept even if the description must be shortened.
+
+**How it was explained.**
+- **M4 in plain words.** Right now Claude can build a program, but it only lives in the chat. M4 adds `save_program_to_wger`, which puts the program into Sarah's wger account so it shows up in her tracker app, ready to log. Two problems:
+  1. **Translating names.** rag-motion's "goblet-squat" and wger's "Goblet Squat" are different records. wger knows exercises by numbers (e.g. #203), so we need a lookup table of the 60 exercises -> wger numbers, "like a phrasebook between two languages". A wrong match would put the wrong exercise on Sarah's phone, so the coach reviews it.
+  2. **Writing safely.** This is the first tool that changes data, so it's marked as such (Claude Desktop asks first), it won't save the same program twice, and it double-checks what wger actually saved, since wger silently drops anything it doesn't understand.
+- **Why the program_id design.** A program is big. If Claude had to copy the whole program back into the save tool, it could change a number by mistake, because LLMs aren't reliable copiers of big data. So `build_program` stores the program and returns a short id, and the save tool saves exactly what was checked.
+- **Why the custom exercises have no license issue.** They use rag-motion's own original text.
+- **Coach-eye review of the first save.** Three full-body days in a row is poor programming; spread them Mon/Wed/Fri. rag-motion never had dates, so scheduling was new territory.
+- **"Half a routine is worse than none."** On a failed write the tool deletes what it created and says nothing was kept.
+
+**Developer questions.**
+- *"go and also explain m4 to me simply"*: see "M4 in plain words" above.
+- Coach answers to the map review: *"fixes ok, use all 6 close ones, create the custom ones"*.
+
+**Open questions.**
+- The routine link (`url`) only works when the coach/admin is logged in to wger. It was not opened in a browser in this step.
+- Count mismatch: the brief (and the commit message) say 36 name matches were coach-approved, but `data/wger_exercise_map.json` has 35 "name match, coach-approved" rows (35 + 13 + 6 + 6 = 60). The draft had 36 "high" rows; some of them were among the 13 corrections.
+- The coach's decisions were made in chat. The committed [`exercise-map-review.md`](exercise-map-review.md) is the draft sheet with an empty "coach" column. Should it be updated to show the final choices?
+- The map file's `_note` still says "wger_id null = custom exercise", but all 60 rows now have ids.
+- Was Claude Desktop's permission prompt for the write tool seen? The end-to-end test was "through MCP"; the brief doesn't say which client.
+- `verify()` doesn't check max values, rest or units (see What we saw). Enough, or extend?
+- If `build_program` is run again for the same client and the agent changes anything, the new program gets a different id, so it would be saved as a second routine. Is that the wanted behavior?
+- `already_saved` returns `verified: true` without reading the routine back again.
+- The custom exercises (ids 2070-2075) exist only in this local wger. Another wger would need `create_custom_exercises.py` run again, and its ids could differ.
+
+**Learned.**
+- [Mapping IDs between two systems](concepts.md#mapping-ids-between-two-systems) (new)
+- [Fuzzy name matching and its limits](concepts.md#fuzzy-name-matching-and-its-limits) (new)
+- [Nested REST resources (wger's routine model)](concepts.md#nested-rest-resources-wgers-routine-model) (new)
+- [Idempotent writes with a content hash](concepts.md#idempotent-writes-with-a-content-hash) (new)
+- [Read-back verification](concepts.md#read-back-verification) (new)
+- [Cleanup on partial failure (manual rollback)](concepts.md#cleanup-on-partial-failure-manual-rollback) (new)
+- [Passing references, not big data, through an LLM](concepts.md#passing-references-not-big-data-through-an-llm) (new)
+- [Input validation against path tricks](concepts.md#input-validation-against-path-tricks) (new)
+- [Tool annotations](concepts.md#tool-annotations) (extended: the first write tool)
+- [Tool-call permission (human in the loop)](concepts.md#tool-call-permission-human-in-the-loop) (extended: the save tool's docstring rule)
+- [OpenAPI schema and wger's API rules](concepts.md#openapi-schema-and-wgers-api-rules) (extended: routine model, units, length limits)
+- [Fakes in tests (monkeypatch)](concepts.md#fakes-in-tests-monkeypatch) (extended: `FakeWger`)
+
+**Decisions.**
+- [0018. A coach-reviewed, static exercise map](decisions/0018-coach-reviewed-static-exercise-map.md)
+- [0019. Custom wger exercises for the six with no match](decisions/0019-custom-wger-exercises-for-unmatched.md)
+- [0020. Pass a program id; the server stores the program](decisions/0020-program-id-and-server-side-store.md)
+- [0021. Find duplicates with a tag in the routine description](decisions/0021-duplicate-tag-in-routine-description.md)
+- [0022. Weekly layout with rest days, Monday start, 8 weeks](decisions/0022-weekly-layout-with-rest-days.md)
+- [0023. Delete the half-saved routine when a write fails](decisions/0023-manual-rollback-on-failed-write.md)
