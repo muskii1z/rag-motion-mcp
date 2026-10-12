@@ -1,6 +1,6 @@
 """M5: decide next week's change for each exercise. Code decides; the AI only explains.
 
-The rule is the coach's, from rag-motion's coach-reviewed program-design notes [notes-program-design-1]:
+The rule comes from rag-motion's reviewed program-design notes [notes-program-design-1]:
 "add load once the person can do about 2 more reps than the target in the last set for two sessions in a
 row; typical jumps are small (about 2-10% depending on the lift and body region)". Coach's reading for
 rep ranges (2026-10-08): the last set reaches the TOP of the range in two sessions in a row. Jumps: +5%

@@ -36,20 +36,20 @@ flowchart LR
 
 | What the server offers | Kind | Notes |
 |---|---|---|
-| `search_exercises` | tool, read-only | 60 coach-reviewed exercises; filters for equipment owned and training level |
+| `search_exercises` | tool, read-only | 60 reviewed exercises; filters for equipment owned and training level |
 | `search_sources` | tool, read-only | Research passages with ids, filtered by population (adults, older adults, youth) |
 | `ask_question` | tool, read-only | rag-motion's full RAG pipeline: a cited answer, general guidance kept separate |
 | `build_program` | tool, read-only | Multi-turn: returns the questions to ask, then a program that passed ~20 rule checks |
 | `save_program_to_wger` | tool, **changes data** | Saves a built program as a wger routine by id; idempotent; verified by reading it back |
 | `get_training_log` | tool, read-only | The client's logged sets lined up against the plan |
-| `suggest_next_week` | tool, read-only | Next week's change per exercise, decided in code by the coach's progression rule |
+| `suggest_next_week` | tool, read-only | Next week's change per exercise, decided in code by a progression rule from the reviewed notes |
 | `ragmotion://exercises`, `ragmotion://sources` | resources | The exercise catalog and the 13 sources with licenses |
 | `new_client_intake` | prompt | A ready-made start for a new client |
 
 ## Design choices worth a look
 
 - **Code decides, the AI explains.** Progression ("add load once the last set reaches the top of the range two
-  sessions in a row, +5% lower body / +2.5% upper") comes from the coach's own reviewed notes and runs in code.
+  sessions in a row, +5% lower body / +2.5% upper") comes from rag-motion's reviewed program-design notes and runs in code.
   The model gets the decision plus the source passage and explains it. It never picks the numbers.
 - **Writes are safe.** `save_program_to_wger` is the only tool that changes data and is annotated as such, so clients
   ask first. The model passes a short program id, not the program, so it can't change a number while copying.
@@ -59,7 +59,7 @@ flowchart LR
   as labeled `UntrustedText`, instruction-like phrases are flagged, and the server instructions say never to follow
   them. The eval below shows what that's worth.
 - **Two systems, one reviewed map.** Each rag-motion exercise is mapped to a wger exercise id. Name matching drafted
-  it, the coach reviewed it (13 corrections), and 6 exercises with no match became custom wger exercises.
+  it, I reviewed it (13 corrections), and 6 exercises with no match became custom wger exercises.
 - **Typed, self-contained schemas.** Every tool returns a typed model, so clients see each field. Input schemas
   avoid `$ref`, because one client showed a referenced schema to the model as "a list of anything".
 
@@ -146,7 +146,7 @@ Evals: `uv run python evals/run_tool_choice.py --models <openrouter-model> --run
 
 ## Data and licenses
 
-Fictional clients only. Exercise descriptions are original, coach-reviewed text from rag-motion. Research passages
+Fictional clients only. Exercise descriptions are original text from rag-motion, reviewed by me. Research passages
 come from openly licensed sources (public domain or CC BY 4.0) listed in rag-motion's `data/sources.toml`.
 wger (AGPL-3.0) runs unchanged as a separate service; its exercise names are only used as link targets.
 

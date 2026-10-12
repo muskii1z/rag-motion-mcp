@@ -140,7 +140,7 @@ def _passage(p) -> Passage:
 @server.tool(annotations=READ_ONLY)
 def search_sources(query: str, population: Population | None = None, limit: int = 5) -> list[Passage]:
     """Search rag-motion's research and guidelines (Physical Activity Guidelines, open-access studies,
-    coach-reviewed notes) and return the most relevant passages with their ids, for citing.
+    reviewed notes) and return the most relevant passages with their ids, for citing.
 
     Use when you need the evidence itself, e.g. to quote or compare sources.
     query: what to look up, e.g. "rest between sets for muscle growth".

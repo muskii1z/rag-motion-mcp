@@ -3,7 +3,7 @@
 rag-motion program                      wger routine
   title, progression           ->        routine (name max 25 chars, description max 1000)
   days[]                        ->        day (name max 20) per training day
-    exercises[]                 ->        slot + slot-entry (exercise id from the coach-reviewed map)
+    exercises[]                 ->        slot + slot-entry (exercise id from the reviewed map)
       sets "2-3"                ->        sets-config 2, max-sets-config 3
       reps "8-12" / "30 s"      ->        repetitions-config (+ max) with unit Repetitions / Seconds / Meters
       rest "90 s" / "2-3 min"   ->        rest-config in seconds (+ max)
